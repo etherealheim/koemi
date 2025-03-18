@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  AtSign,
   BookOpen,
   Bot,
   Frame,
@@ -15,7 +16,6 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -37,7 +37,7 @@ const data = {
     {
       title: "Today",
       url: "#",
-      icon: SquareTerminal,
+      icon: AtSign,
       isActive: true,
       items: [
         {
@@ -57,7 +57,7 @@ const data = {
     {
       title: "Yesterday",
       url: "#",
-      icon: Bot,
+      icon: AtSign,
       items: [
         {
           title: "AI Model Training",
@@ -76,7 +76,7 @@ const data = {
     {
       title: "2 Days Ago",
       url: "#",
-      icon: BookOpen,
+      icon: AtSign,
       items: [
         {
           title: "System Architecture",
@@ -99,7 +99,7 @@ const data = {
     {
       title: "1 Week Ago",
       url: "#",
-      icon: Settings2,
+      icon: AtSign,
       items: [
         {
           title: "Project Setup",
@@ -118,18 +118,6 @@ const data = {
           url: "#",
         },
       ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
     },
   ],
   projects: [
@@ -174,7 +162,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

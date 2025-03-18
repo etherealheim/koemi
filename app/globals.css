@@ -133,3 +133,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .dropdown-menu-blur {
+    @apply bg-background/80 backdrop-blur-md border-border/50;
+  }
+}
