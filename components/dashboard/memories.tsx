@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, animate } from "framer-motion";
 
 interface Memory {
   id: string;
@@ -21,14 +21,20 @@ export function Memories({ memories = [], className }: MemoriesProps) {
   const [activeMemoryId, setActiveMemoryId] = React.useState<string | null>(null);
   const [hoveredMemoryId, setHoveredMemoryId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const [closestMemoryId, setClosestMemoryId] = React.useState<string | null>(null);
+  const [randomOffsets] = React.useState(() =>
+    Array.from({ length: 80 }, () => ({
+      damping: Math.random() * 30 + 10, // 10 to 40
+      stiffness: Math.random() * 200 + 300, // 300 to 500
+      delay: Math.random() * 0.3, // 0 to 0.3s
+    }))
+  );
 
-  // Generate random memories if none provided
   const memoriesData = React.useMemo(() => {
     if (memories.length > 0) return memories;
-    
-    // Create memories with interesting titles
     const memoryTitles = [
-      "Quantum Entanglement", "Cooking List", "Movies for Dinner", 
+      "Quantum Entanglement", "Cooking List", "Movies for Dinner",
       "Neural Networks", "Travel Plans", "Book Recommendations",
       "Gardening Tips", "Fitness Goals", "Project Ideas",
       "Dream Journal", "Philosophy Notes", "Music Playlist",
@@ -38,49 +44,58 @@ export function Memories({ memories = [], className }: MemoriesProps) {
       "Astronomy Notes", "Chess Strategies", "Podcast List",
       "Hiking Trails", "Coffee Varieties", "Wine Tasting",
       "Architectural Designs", "Fashion Trends", "Historical Events",
-      "Scientific Discoveries", "Math Problems", "Poetry Collection"
+      "Scientific Discoveries", "Math Problems", "Poetry Collection",
+      "Digital Art", "Blockchain Notes", "Sustainable Living",
+      "Space Exploration", "Robotics Projects", "Virtual Reality",
+      "Artificial Intelligence", "Biohacking Ideas", "Quantum Computing",
+      "Cybersecurity Tips", "3D Printing Designs", "Smart Home Automation",
+      "Renewable Energy", "Genetic Engineering", "Nanotechnology",
+      "Augmented Reality", "Cloud Computing", "Internet of Things",
+      "Machine Learning", "Data Visualization", "Cryptography",
+      "Biotechnology", "Neuroscience", "Astrophysics"
     ];
-    
-    // Reduce the number of items for better performance
-    return Array.from({ length: 60 }, (_, i) => {
-      return {
-        id: `memory-${i}`,
-        name: memoryTitles[i % memoryTitles.length],
-        height: undefined
-      };
-    });
+    return Array.from({ length: 80 }, (_, i) => ({
+      id: `memory-${i}`,
+      name: memoryTitles[i % memoryTitles.length],
+      height: undefined
+    }));
   }, [memories]);
 
-  // Handle mouse move using Framer Motion's built-in optimizations
   const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
-    if (!containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    mouseX.set(e.clientX - rect.left);
-  }, [mouseX]);
+    if (!innerRef.current) return;
 
-  // Get the name of the currently displayed memory (hovered or active)
+    const innerRect = innerRef.current.getBoundingClientRect();
+    const adjustedMouseX = e.clientX - innerRect.left;
+    const innerWidth = innerRect.width;
+
+    const normalizedMouseX = Math.max(0, Math.min(1, adjustedMouseX / innerWidth));
+    mouseX.set(normalizedMouseX);
+
+    const memoryCount = memoriesData.length;
+    if (memoryCount === 0) return;
+
+    const closestIndex = Math.round(normalizedMouseX * (memoryCount - 1));
+    const clampedIndex = Math.max(0, Math.min(memoryCount - 1, closestIndex));
+    setClosestMemoryId(memoriesData[clampedIndex].id);
+  }, [mouseX, memoriesData]);
+
   const displayedMemoryName = React.useMemo(() => {
-    // If there's an active memory, it takes precedence
-    if (activeMemoryId) {
-      const memory = memoriesData.find(m => m.id === activeMemoryId);
-      return memory ? memory.name : null;
-    }
-    
-    // Otherwise, show hovered memory name
-    if (hoveredMemoryId) {
-      const memory = memoriesData.find(m => m.id === hoveredMemoryId);
-      return memory ? memory.name : null;
-    }
-    
-    return null;
+    const memory = memoriesData.find(m => m.id === (activeMemoryId || hoveredMemoryId));
+    return memory ? memory.name : null;
   }, [hoveredMemoryId, activeMemoryId, memoriesData]);
 
+  // Pre-calculate minHeight for initial animation
+  const getMinHeight = () => {
+    const containerHeight = containerRef.current?.offsetHeight || 100;
+    const maxMemoryHeight = containerHeight * 0.7;
+    return maxMemoryHeight * 0.4; // Same as minHeight in targetHeight
+  };
+
   return (
-    <div 
+    <div
       ref={containerRef}
       className={cn(
-        "relative flex items-end justify-between p-6 rounded-lg bg-[#f5f5dc]", 
+        "relative flex items-end justify-between p-6 rounded-lg bg-[#f5f5dc]",
         className
       )}
       onMouseMove={handleMouseMove}
@@ -90,55 +105,80 @@ export function Memories({ memories = [], className }: MemoriesProps) {
           {displayedMemoryName}
         </div>
       )}
-      <div className="flex items-end w-full justify-between">
+      <div ref={innerRef} className="flex items-end w-full justify-between">
         {memoriesData.map((memory, index) => {
-          // Create a motion value for each memory's height that responds to mouse position
-          const memoryHeight = useTransform(
+          // Target height as a MotionValue for mouse interaction
+          const targetHeight = useTransform(
             mouseXSmooth,
             (mouseXValue) => {
-              if (!containerRef.current) return 100;
-              
-              const containerWidth = containerRef.current.offsetWidth;
-              const containerHeight = containerRef.current.offsetHeight;
+              const containerHeight = containerRef.current?.offsetHeight || 100;
               const maxMemoryHeight = containerHeight * 0.7;
-              
-              // If this memory is active, always return max height
-              if (activeMemoryId === memory.id) {
-                return maxMemoryHeight;
-              }
-              
+
+              if (activeMemoryId === memory.id) return maxMemoryHeight;
+
               const memoryCount = memoriesData.length;
-              const memoryPosition = (containerWidth / memoryCount) * (index + 0.5);
-              
-              // Calculate distance from mouse to memory
-              const distance = Math.abs(mouseXValue - memoryPosition);
-              const maxDistance = containerWidth / 6; // Increased influence range
-              
-              // Create a bell curve effect using Gaussian function
-              // e^(-(x^2)/(2*sigma^2)) where sigma controls the width of the bell
-              const sigma = maxDistance / 2.5;
-              const gaussianFactor = Math.exp(-(Math.pow(distance, 2)) / (2 * Math.pow(sigma, 2)));
-              
-              // Calculate height based on bell curve
+              const memoryPos = index / (memoryCount - 1);
+              const distance = Math.abs(mouseXValue - memoryPos);
+
+              const sigma = 1 / 15;
+              const gaussianFactor = Math.exp(-(distance ** 2) / (2 * sigma ** 2));
               const minHeight = maxMemoryHeight * 0.4;
               return minHeight + gaussianFactor * (maxMemoryHeight - minHeight);
             }
           );
-          
+
+          // Spring-animated height with random offsets
+          const animatedHeight = useSpring(0, {
+            damping: randomOffsets[index].damping,
+            stiffness: randomOffsets[index].stiffness,
+            restDelta: 0.01
+          });
+
+          // Automatic reveal animation on mount
+          React.useEffect(() => {
+            const minHeight = getMinHeight();
+            const delay = randomOffsets[index].delay;
+
+            // Animate from 0 to minHeight with random delay
+            const controls = animate(animatedHeight, minHeight, {
+              type: "spring",
+              damping: randomOffsets[index].damping,
+              stiffness: randomOffsets[index].stiffness,
+              delay,
+            });
+
+            // After initial animation, follow targetHeight for mouse interaction
+            const timeout = setTimeout(() => {
+              const unsubscribe = targetHeight.on("change", (latestHeight) => {
+                animatedHeight.set(latestHeight);
+              });
+              return () => unsubscribe();
+            }, delay * 1000); // Match delay in ms
+
+            return () => {
+              controls.stop();
+              clearTimeout(timeout);
+            };
+          }, [animatedHeight, targetHeight, index]);
+
           return (
-            <div 
+            <div
               key={memory.id}
-              className="relative flex flex-col items-center px-1 min-w-[12px] cursor-pointer"
+              className="relative flex flex-col items-center px-1 min-w-[2px] cursor-pointer"
               onMouseEnter={() => !activeMemoryId && setHoveredMemoryId(memory.id)}
               onMouseLeave={() => !activeMemoryId && setHoveredMemoryId(null)}
               onClick={() => setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id)}
             >
               <motion.div
-                className={cn(
-                  "w-[2px] rounded-t-sm", // Increased width from 3px to 6px
-                  activeMemoryId === memory.id ? "bg-red-500" : "bg-black"
-                )}
-                style={{ height: memoryHeight }}
+                className="w-[2px] rounded-t-sm"
+                style={{
+                  height: animatedHeight,
+                  backgroundColor: activeMemoryId === memory.id
+                    ? "rgb(239, 68, 68)"
+                    : closestMemoryId === memory.id
+                      ? "rgb(0, 0, 0)"
+                      : "rgb(150, 150, 150)"
+                }}
               />
             </div>
           );
