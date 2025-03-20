@@ -1,6 +1,5 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
 import { motion } from "framer-motion"
 
 import {
@@ -19,6 +18,21 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  ChevronRight,
+  Pin,
+  MoreHorizontal,
+  Share,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react"
 
 export function NavMain({
   items,
@@ -79,12 +93,36 @@ export function NavMain({
                     >
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubItem key={subItem.title} className="group/menu-sub-hover relative">
                             <SidebarMenuSubButton asChild>
-                              <a href={subItem.url} className="hover:cursor-pointer">
+                              <a href={subItem.url} className="hover:cursor-pointer relative pr-7">
                                 <span className="text-gray-500">{subItem.title}</span>
                               </a>
                             </SidebarMenuSubButton>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <SidebarMenuAction 
+                                  className="!opacity-0 group-hover/menu-sub-hover:!opacity-100 data-[state=open]:!opacity-100 top-1 right-1.5"
+                                >
+                                  <MoreHorizontal />
+                                  <span className="sr-only">More</span>
+                                </SidebarMenuAction>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                className="w-48"
+                                side="right"
+                                align="start"
+                              >
+                                <DropdownMenuItem>
+                                  <Pin className="text-muted-foreground" />
+                                  <span>Pin</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Trash2 className="text-muted-foreground" />
+                                  <span>Delete</span>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </SidebarMenuSubItem>
                         ))}
                       </SidebarMenuSub>
