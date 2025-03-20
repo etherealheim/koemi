@@ -124,7 +124,7 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
             textareaRef.current = element
           }}
           className={cn(
-            "flex w-full rounded-md border bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
+            "flex w-full rounded-md border border-zinc-900 bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
             "placeholder:text-zinc-600 focus:placeholder:opacity-0 placeholder:transition-all duration-150",
             "text-zinc-100",
             className

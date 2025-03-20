@@ -3,15 +3,9 @@
 import * as React from "react"
 import {
   AtSign,
-  BookOpen,
-  Bot,
   Frame,
-  LifeBuoy,
   Map,
   PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -42,7 +36,7 @@ const data = {
       items: [
         {
           title: "Project brainstorming",
-          url: "#",
+          url: "/editor",
         },
         {
           title: "Code review help",
@@ -146,13 +140,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <a href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
                   <img src="/avatars/acme.png" alt="Logo" className="max-w-full max-h-full object-contain" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                  <span className="truncate font-semibold">Koemi</span>
+                  <span className="truncate text-xs">Note-taking AI</span>
                 </div>
               </a>
             </SidebarMenuButton>
