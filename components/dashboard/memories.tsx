@@ -3,6 +3,9 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useSpring, useTransform, animate } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { writeFile } from "fs/promises";
+import path from "path";
 
 interface Memory {
   id: string;
@@ -16,6 +19,7 @@ interface MemoriesProps {
 }
 
 export function Memories({ memories = [], className }: MemoriesProps) {
+  const router = useRouter();
   const mouseX = useMotionValue(0);
   const mouseXSmooth = useSpring(mouseX, { damping: 50, stiffness: 400 });
   const [activeMemoryId, setActiveMemoryId] = React.useState<string | null>(null);
@@ -89,6 +93,55 @@ export function Memories({ memories = [], className }: MemoriesProps) {
     const containerHeight = containerRef.current?.offsetHeight || 100;
     const maxMemoryHeight = containerHeight * 0.7;
     return maxMemoryHeight * 0.4; // Same as minHeight in targetHeight
+  };
+
+  // Generate markdown content based on memory name
+  const generateMemoryContent = (memoryName: string) => {
+    // Generate different content based on memory category
+    const topics: Record<string, string> = {
+      "Quantum": "# Quantum Entanglement\n\nQuantum entanglement is a physical phenomenon that occurs when a group of particles are generated, interact, or share spatial proximity in a way such that the quantum state of each particle of the group cannot be described independently of the state of the others, including when the particles are separated by a large distance.\n\n## Key Concepts\n\n- Spooky action at a distance\n- Bell's inequality\n- Quantum teleportation\n- Quantum computing applications\n\n## Recent Thoughts\n\nI've been thinking about how quantum entanglement might be leveraged for secure communications systems beyond current quantum key distribution protocols.",
+      "Cooking": "# Cooking List\n\n## Recipes to Try\n\n- Mushroom risotto with truffle oil\n- Korean bibimbap with homemade gochujang\n- Sourdough bread with wild yeast starter\n- Thai green curry with homemade paste\n\n## Ingredients to Purchase\n\n- High-quality olive oil\n- Fresh herbs (basil, thyme, rosemary)\n- Specialty salts\n- Aged balsamic vinegar\n\n## Cooking Techniques to Master\n\n- French knife skills\n- Proper tempering of chocolate\n- Sous vide cooking\n- Fermentation methods",
+      "Movies": "# Movies for Dinner\n\n## Watch List\n\n- The Seventh Seal (1957)\n- In the Mood for Love (2000)\n- Parasite (2019)\n- Everything Everywhere All at Once (2022)\n\n## Director Retrospectives\n\n- Wong Kar-wai\n- Andrei Tarkovsky\n- Agnès Varda\n- Hayao Miyazaki\n\n## Themed Movie Nights\n\n- Neo-noir evening\n- Science fiction classics\n- International animation showcase\n- Documentary double features",
+      "Neural": "# Neural Networks\n\n## Current Projects\n\n- Building a generative adversarial network for art creation\n- Implementing a transformer model for language processing\n- Exploring reinforcement learning for game playing\n\n## Research Areas\n\n- Attention mechanisms\n- Few-shot learning\n- Explainable AI\n- Neural architecture search\n\n## Resources\n\n- Papers to read: https://arxiv.org/list/cs.LG/recent\n- Frameworks to explore: PyTorch, JAX\n- Datasets to test: ImageNet, GLUE benchmark",
+      "Travel": "# Travel Plans\n\n## Destinations\n\n- Kyoto, Japan (Cherry blossom season)\n- Patagonia, Argentina/Chile (Summer hiking)\n- Iceland (Northern lights winter trip)\n- Morocco (Cultural exploration)\n\n## Planning Checklist\n\n- Research visa requirements\n- Check vaccination needs\n- Find accommodation options\n- Create rough itineraries\n- Budget estimates per destination\n\n## Packing Essentials\n\n- Universal adapter\n- Compact camera\n- Lightweight quick-dry clothes\n- Quality walking shoes",
+      "Book": "# Book Recommendations\n\n## Fiction\n\n- \"The Overstory\" by Richard Powers\n- \"Piranesi\" by Susanna Clarke\n- \"The Memory Police\" by Yoko Ogawa\n- \"Klara and the Sun\" by Kazuo Ishiguro\n\n## Non-Fiction\n\n- \"Entangled Life\" by Merlin Sheldrake\n- \"Breath\" by James Nestor\n- \"Four Thousand Weeks\" by Oliver Burkeman\n- \"Atlas of the Invisible\" by James Cheshire and Oliver Uberti\n\n## Reading Notes\n\nI've been particularly interested in books exploring the relationship between humans and technology lately. Looking for more recommendations in this area.",
+      "default": `# ${memoryName}\n\n## Overview\n\nThis is a place to capture your thoughts, ideas, and reflections on ${memoryName}.\n\n## Key Points\n\n- First important point about ${memoryName}\n- Second important insight\n- Questions to explore further\n- Connections to other topics\n\n## Resources\n\n- Books to read\n- People to connect with\n- Websites to explore\n- Tools to try\n\n## Next Steps\n\nWhat would you like to learn or explore next about ${memoryName}?`
+    };
+    
+    // Find the matching category or use default
+    const category = Object.keys(topics).find(key => memoryName.includes(key));
+    return category ? topics[category] : topics.default;
+  };
+
+  // Handle memory click to redirect to memory page
+  const handleMemoryClick = async (memory: Memory) => {
+    const memoryName = memory.name.toLowerCase().replace(/\s+/g, '-');
+    const content = generateMemoryContent(memory.name);
+    
+    try {
+      // Make API call to save memory content before redirecting
+      const response = await fetch('/api/memory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          content, 
+          fileName: `vault/memories/${memoryName}.md` 
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save memory content');
+      }
+      
+      // Redirect to the memory page
+      router.push(`/memories/${memoryName}`);
+    } catch (error) {
+      console.error("Failed to save memory content:", error);
+      // Still redirect even if saving fails
+      router.push(`/memories/${memoryName}`);
+    }
   };
 
   return (
@@ -167,7 +220,12 @@ export function Memories({ memories = [], className }: MemoriesProps) {
               className="relative flex flex-col items-center px-1 min-w-[4px] cursor-pointer"
               onMouseEnter={() => !activeMemoryId && setHoveredMemoryId(memory.id)}
               onMouseLeave={() => !activeMemoryId && setHoveredMemoryId(null)}
-              onClick={() => setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id)}
+              onClick={() => {
+                setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id);
+                if (memory.id !== activeMemoryId) {
+                  handleMemoryClick(memory);
+                }
+              }}
             >
               <motion.div
                 className="w-[2px] rounded-t-sm"

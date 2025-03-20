@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   Folder,
   MoreHorizontal,
@@ -25,7 +26,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavProjects({
+function NavProjectsComponent({
   projects,
 }: {
   projects: {
@@ -86,4 +87,7 @@ export function NavProjects({
       </SidebarMenu>
     </SidebarGroup>
   )
-} 
+}
+
+// Export a memoized version of the component
+export const NavProjects = React.memo(NavProjectsComponent) 

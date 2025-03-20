@@ -89,7 +89,6 @@ export default function DateCard() {
           "Be the change you want to see in the world."
           - Mahatma Gandhi
         </motion.p>
-        
       </CardContent>
     </Card>
   );

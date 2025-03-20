@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   BadgeCheck,
   Bell,
@@ -40,7 +41,7 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export function NavUser({
+function NavUserComponent({
   user,
 }: {
   user: {
@@ -153,4 +154,7 @@ export function NavUser({
       </Dialog>
     </>
   )
-} 
+}
+
+// Export a memoized version of the component
+export const NavUser = React.memo(NavUserComponent) 

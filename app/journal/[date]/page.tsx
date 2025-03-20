@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { TextComponent } from "@/components/text-component";
 import { AppSidebar } from "@/components/app-sidebar"
@@ -19,10 +20,9 @@ import {
 } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/ui/theme-toggle"
 import { useParams } from "next/navigation";
-import { mkdir } from "fs/promises";
-import path from "path";
 
-interface JournalPageProps {}
+// Memoize the AppSidebar to prevent re-renders on navigation
+const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
 
 export default function JournalPage() {
   const params = useParams();
@@ -74,7 +74,7 @@ export default function JournalPage() {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <MemoizedAppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4 w-full justify-between">
@@ -84,7 +84,7 @@ export default function JournalPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/journal">Journal</BreadcrumbLink>
+                    Journal
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>

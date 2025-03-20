@@ -27,6 +27,18 @@ export function Toolbar({
   className,
   selectedText = "",
 }: ToolbarProps) {
+  // Add a ref and state to track the toolbar's dimensions
+  const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const [toolbarDimensions, setToolbarDimensions] = React.useState({ width: 120, height: 40 });
+
+  // Measure the toolbar when it renders
+  React.useEffect(() => {
+    if (toolbarRef.current && position) {
+      const { width, height } = toolbarRef.current.getBoundingClientRect();
+      setToolbarDimensions({ width, height });
+    }
+  }, [position]);
+
   if (!position || !selectedText) return null;
 
   const handleBold = (e: React.MouseEvent) => {
@@ -48,24 +60,27 @@ export function Toolbar({
   };
 
   // Ensure toolbar stays within viewport
-  const toolbarWidth = 120; // Approximate width, adjust as needed
-  const toolbarHeight = 40; // Approximate height, adjust as needed
   const xPos = Math.min(
-    Math.max(position.x, toolbarWidth / 2 + 10), // Prevent going off left edge
-    window.innerWidth - toolbarWidth / 2 - 10 // Prevent going off right edge
+    Math.max(position.x, toolbarDimensions.width / 2 + 10), // Prevent going off left edge
+    window.innerWidth - toolbarDimensions.width / 2 - 10 // Prevent going off right edge
   );
-  const yPos = position.y - toolbarHeight - 5; // 5px above the selection
+  
+  // Position above the selection with a gap
+  const yPos = Math.max(position.y - toolbarDimensions.height - 8, 10); // 8px gap, minimum 10px from top
 
   return (
     <div
+      ref={toolbarRef}
       className={cn(
         "fixed z-50 flex items-center gap-1 rounded-md border bg-background p-1 shadow-md",
         className
       )}
       style={{
-        top: `${Math.max(yPos, 10)}px`, // Ensure it doesn't go above the viewport
+        top: `${yPos}px`,
         left: `${xPos}px`,
         transform: "translateX(-50%)", // Center horizontally over selection
+        opacity: 1,
+        transition: "opacity 0.2s ease-in-out"
       }}
     >
       <TooltipProvider>

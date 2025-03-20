@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { motion } from "framer-motion"
 
 import {
@@ -34,7 +35,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-export function NavMain({
+function NavMainComponent({
   items,
 }: {
   items: {
@@ -137,3 +138,6 @@ export function NavMain({
     </SidebarGroup>
   )
 }
+
+// Export a memoized version of the component
+export const NavMain = React.memo(NavMainComponent)

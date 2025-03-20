@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { TextComponent } from "@/components/text-component";
-import { saveContent, loadContent } from "./actions";
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -20,20 +19,25 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/ui/theme-toggle"
+import { useParams } from "next/navigation";
 
 // Memoize the AppSidebar to prevent re-renders on navigation
 const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
 
-export default function EditorPage() {
+export default function MemoryPage() {
+  const params = useParams();
+  const name = params.name as string;
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const fileName = "journal.md";
+  const fileName = `vault/memories/${name}.md`;
 
   useEffect(() => {
     const loadInitialContent = async () => {
       try {
-        const initialContent = await loadContent(fileName);
-        setContent(initialContent);
+        const response = await fetch(`/api/memory?file=${fileName}`);
+        if (!response.ok) throw new Error('Failed to load memory');
+        const data = await response.json();
+        setContent(data.content);
       } catch (error) {
         console.error("Failed to load content:", error);
         setContent("");
@@ -49,11 +53,23 @@ export default function EditorPage() {
     const newContent = e.target.value;
     setContent(newContent);
     try {
-      await saveContent(newContent, fileName);
+      await fetch('/api/memory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newContent, fileName }),
+      });
     } catch (error) {
       console.error("Failed to save content:", error);
     }
   };
+
+  // Format name for display (e.g., "quantum-entanglement" to "Quantum Entanglement")
+  const displayName = name
+    .split("-")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 
   return (
     <SidebarProvider>
@@ -67,11 +83,11 @@ export default function EditorPage() {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="#">Notes</BreadcrumbLink>
+                    Memories
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>{fileName}</BreadcrumbPage>
+                    <BreadcrumbPage>{displayName}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -87,7 +103,7 @@ export default function EditorPage() {
           ) : (
             <TextComponent
               fileName={fileName}
-              placeholder="Start typing"
+              placeholder="Start writing in your memory..."
               className="min-h-[calc(100vh-6rem)] font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
               value={content}
               onChange={handleChange}
@@ -99,4 +115,4 @@ export default function EditorPage() {
       </SidebarInset>
     </SidebarProvider>
   );
-}
+} 

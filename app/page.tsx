@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -21,12 +22,15 @@ import { useCommandMenu } from "@/components/command-menu"
 import DateCard from "@/components/dashboard/date-card"
 import CalendarCard from "@/components/dashboard/calendar-card"
 
+// Memoize the AppSidebar component to prevent unnecessary re-renders
+const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
+
 export default function Page() {
   const { setOpen: setCommandMenuOpen } = useCommandMenu();
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <MemoizedAppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4 w-full justify-between">
