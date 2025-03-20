@@ -25,9 +25,9 @@ export function Memories({ memories = [], className }: MemoriesProps) {
   const [closestMemoryId, setClosestMemoryId] = React.useState<string | null>(null);
   const [randomOffsets] = React.useState(() =>
     Array.from({ length: 80 }, () => ({
-      damping: Math.random() * 30 + 10, // 10 to 40
-      stiffness: Math.random() * 200 + 300, // 300 to 500
-      delay: Math.random() * 0.3, // 0 to 0.3s
+      damping: Math.random() * 20 + 15, // 15 to 35
+      stiffness: Math.random() * 100 + 200, // 200 to 300
+      delay: Math.random() * 0.2, // 0 to 0.2s
     }))
   );
 
@@ -95,13 +95,13 @@ export function Memories({ memories = [], className }: MemoriesProps) {
     <div
       ref={containerRef}
       className={cn(
-        "relative flex items-end justify-between p-6 rounded-lg bg-[#f5f5dc]",
+        "relative flex items-end justify-between p-6 rounded-lg bg-orange-100",
         className
       )}
       onMouseMove={handleMouseMove}
     >
       {displayedMemoryName && (
-        <div className="absolute top-3 left-3 text-base md:text-lg font-medium text-black">
+        <div className="absolute top-4 left-6 text-base md:text-xl font-mono font-semibold text-stone-600">
           {displayedMemoryName}
         </div>
       )}
@@ -164,7 +164,7 @@ export function Memories({ memories = [], className }: MemoriesProps) {
           return (
             <div
               key={memory.id}
-              className="relative flex flex-col items-center px-1 min-w-[2px] cursor-pointer"
+              className="relative flex flex-col items-center px-1 min-w-[4px] cursor-pointer"
               onMouseEnter={() => !activeMemoryId && setHoveredMemoryId(memory.id)}
               onMouseLeave={() => !activeMemoryId && setHoveredMemoryId(null)}
               onClick={() => setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id)}
@@ -174,10 +174,10 @@ export function Memories({ memories = [], className }: MemoriesProps) {
                 style={{
                   height: animatedHeight,
                   backgroundColor: activeMemoryId === memory.id
-                    ? "rgb(239, 68, 68)"
+                    ? "#ef4444"
                     : closestMemoryId === memory.id
                       ? "rgb(0, 0, 0)"
-                      : "rgb(150, 150, 150)"
+                      : "rgb(220, 207, 185)"
                 }}
               />
             </div>
