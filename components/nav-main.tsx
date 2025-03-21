@@ -95,7 +95,7 @@ function NavMainComponent({
                           <SidebarMenuSubItem key={subItem.title} className="group/menu-sub-hover relative">
                             <SidebarMenuSubButton asChild>
                               <a href={subItem.url} className="hover:cursor-pointer relative pr-7">
-                                <span className="text-gray-500">{subItem.title}</span>
+                                <span className="text-muted-foreground">{subItem.title}</span>
                               </a>
                             </SidebarMenuSubButton>
                             <DropdownMenu>

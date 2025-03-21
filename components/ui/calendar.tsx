@@ -15,7 +15,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3 flex flex-col", className)}
+      className={cn("p-0 flex flex-col", className)}
       classNames={{
         months: "flex flex-col sm:flex-row gap-2 flex-1",
         month: "flex flex-col gap-4 flex-1",
@@ -41,7 +41,7 @@ function Calendar({
         ),
         day: cn(
           buttonVariants({ variant: "ghost" }),
-          "w-full h-9 p-0 font-normal aria-selected:opacity-100"
+          "w-full h-8 p-0.5 font-normal aria-selected:opacity-100"
         ),
         day_range_start:
           "day-range-start aria-selected:bg-primary aria-selected:text-primary-foreground",

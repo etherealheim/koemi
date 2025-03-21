@@ -153,8 +153,8 @@ function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>)
                   />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Koemi</span>
-                  <span className="truncate text-xs">Note-taking AI</span>
+                  <span className="truncate font-semibold font-mono">Koemi</span>
+                  <span className="truncate text-xs text-muted-foreground">MarkdownAI</span>
                 </div>
               </Link>
             </SidebarMenuButton>
