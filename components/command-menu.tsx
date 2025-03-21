@@ -2,19 +2,16 @@
 
 import * as React from "react";
 import {
-  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
   CommandShortcut
 } from "@/components/ui/command";
 import { DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 // Create a context to manage the command menu state
 type CommandMenuContextType = {

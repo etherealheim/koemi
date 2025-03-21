@@ -8,7 +8,6 @@ import {
   CreditCard,
   LogOut,
   Settings2,
-  Sparkles,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -28,7 +27,6 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"

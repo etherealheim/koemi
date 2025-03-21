@@ -14,8 +14,19 @@ async function ensureDirectoryExists(filePath: string) {
   }
 }
 
+// Define proper types for the cache data
+interface CacheData {
+  entries?: Array<{ name: string }>;
+  content?: string;
+}
+
+interface CacheItem {
+  data: CacheData;
+  timestamp: number;
+}
+
 // Use a different approach to cache: store the actual data instead of Response objects
-const responseCache = new Map<string, { data: any, timestamp: number }>();
+const responseCache = new Map<string, CacheItem>();
 const CACHE_TTL = 5000; // 5 seconds cache TTL
 
 // GET: Load memory content or list entries

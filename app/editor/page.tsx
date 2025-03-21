@@ -24,6 +24,9 @@ import { ModeToggle } from "@/components/ui/theme-toggle"
 // Memoize the AppSidebar to prevent re-renders on navigation
 const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
 
+// Add display name to fix react/display-name warning
+MemoizedAppSidebar.displayName = "MemoizedAppSidebar";
+
 export default function EditorPage() {
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);

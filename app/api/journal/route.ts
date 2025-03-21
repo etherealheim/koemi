@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, readFile, mkdir, unlink, readdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { headers } from "next/headers";
 
 function getFilePath(fileName: string) {
   return join(process.cwd(), fileName);
@@ -15,8 +14,19 @@ async function ensureDirectoryExists(filePath: string) {
   }
 }
 
+// Define proper types for the cache data
+interface CacheData {
+  entries?: Array<{ date: string }>;
+  content?: string;
+}
+
+interface CacheItem {
+  data: CacheData;
+  timestamp: number;
+}
+
 // Use a different approach to cache: store the actual data instead of Response objects
-const responseCache = new Map<string, { data: any, timestamp: number }>();
+const responseCache = new Map<string, CacheItem>();
 const CACHE_TTL = 5000; // 5 seconds cache TTL
 
 // GET: Load journal content or list entries

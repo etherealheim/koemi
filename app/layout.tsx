@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,11 +13,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const metadata: Metadata = {
-  title: "Westworld Dashboard",
-  description: "Interactive dashboard for managing and monitoring all park operations",
-};
 
 export default function RootLayout({
   children,

@@ -4,8 +4,6 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useSpring, useTransform, animate } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { writeFile } from "fs/promises";
-import path from "path";
 
 interface Memory {
   id: string;
@@ -16,6 +14,116 @@ interface Memory {
 interface MemoriesProps {
   memories?: Memory[];
   className?: string;
+}
+
+// Create a separate component for individual memory visualization
+interface MemoryItemProps {
+  memory: Memory;
+  index: number;
+  mouseXSmooth: ReturnType<typeof useSpring>;
+  randomOffsets: Array<{damping: number; stiffness: number; delay: number}>;
+  activeMemoryId: string | null;
+  closestMemoryId: string | null;
+  setHoveredMemoryId: (id: string | null) => void;
+  setActiveMemoryId: (id: string | null) => void;
+  handleMemoryClick: (memory: Memory) => void;
+  getMinHeight: () => number;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+}
+
+function MemoryItem({
+  memory, 
+  index, 
+  mouseXSmooth, 
+  randomOffsets, 
+  activeMemoryId, 
+  closestMemoryId,
+  setHoveredMemoryId,
+  setActiveMemoryId,
+  handleMemoryClick,
+  getMinHeight,
+  containerRef
+}: MemoryItemProps) {
+  // Target height as a MotionValue for mouse interaction
+  const targetHeight = useTransform(
+    mouseXSmooth,
+    (mouseXValue: number) => {
+      const containerHeight = containerRef.current?.offsetHeight || 100;
+      const maxMemoryHeight = containerHeight * 0.7;
+
+      if (activeMemoryId === memory.id) return maxMemoryHeight;
+
+      const memoryCount = 80; // Fixed value since we're no longer in the parent's context
+      const memoryPos = index / (memoryCount - 1);
+      const distance = Math.abs(mouseXValue - memoryPos);
+
+      const sigma = 1 / 15;
+      const gaussianFactor = Math.exp(-(distance ** 2) / (2 * sigma ** 2));
+      const minHeight = maxMemoryHeight * 0.4;
+      return minHeight + gaussianFactor * (maxMemoryHeight - minHeight);
+    }
+  );
+
+  // Spring-animated height with random offsets
+  const animatedHeight = useSpring(0, {
+    damping: randomOffsets[index].damping,
+    stiffness: randomOffsets[index].stiffness,
+    restDelta: 0.01
+  });
+
+  // Automatic reveal animation on mount
+  React.useEffect(() => {
+    const minHeight = getMinHeight();
+    const delay = randomOffsets[index].delay;
+
+    // Animate from 0 to minHeight with random delay
+    const controls = animate(animatedHeight, minHeight, {
+      type: "spring",
+      damping: randomOffsets[index].damping,
+      stiffness: randomOffsets[index].stiffness,
+      delay,
+    });
+
+    // After initial animation, follow targetHeight for mouse interaction
+    const timeout = setTimeout(() => {
+      const unsubscribe = targetHeight.on("change", (latestHeight) => {
+        animatedHeight.set(latestHeight);
+      });
+      return () => unsubscribe();
+    }, delay * 1000); // Match delay in ms
+
+    return () => {
+      controls.stop();
+      clearTimeout(timeout);
+    };
+  }, [animatedHeight, targetHeight, index, randomOffsets, getMinHeight]);
+
+  return (
+    <div
+      key={memory.id}
+      className="relative flex flex-col items-center px-1 min-w-[4px] cursor-pointer"
+      onMouseEnter={() => !activeMemoryId && setHoveredMemoryId(memory.id)}
+      onMouseLeave={() => !activeMemoryId && setHoveredMemoryId(null)}
+      onClick={() => {
+        setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id);
+        if (memory.id !== activeMemoryId) {
+          handleMemoryClick(memory);
+        }
+      }}
+    >
+      <motion.div
+        className="w-[2px] rounded-t-sm"
+        style={{
+          height: animatedHeight,
+          backgroundColor: activeMemoryId === memory.id
+            ? "#ef4444"
+            : closestMemoryId === memory.id
+              ? "rgb(0, 0, 0)"
+              : "rgb(220, 207, 185)"
+        }}
+      />
+    </div>
+  );
 }
 
 export function Memories({ memories = [], className }: MemoriesProps) {
@@ -89,11 +197,11 @@ export function Memories({ memories = [], className }: MemoriesProps) {
   }, [hoveredMemoryId, activeMemoryId, memoriesData]);
 
   // Pre-calculate minHeight for initial animation
-  const getMinHeight = () => {
+  const getMinHeight = React.useCallback(() => {
     const containerHeight = containerRef.current?.offsetHeight || 100;
     const maxMemoryHeight = containerHeight * 0.7;
     return maxMemoryHeight * 0.4; // Same as minHeight in targetHeight
-  };
+  }, []);
 
   // Generate markdown content based on memory name
   const generateMemoryContent = (memoryName: string) => {
@@ -159,88 +267,22 @@ export function Memories({ memories = [], className }: MemoriesProps) {
         </div>
       )}
       <div ref={innerRef} className="flex items-end w-full justify-between">
-        {memoriesData.map((memory, index) => {
-          // Target height as a MotionValue for mouse interaction
-          const targetHeight = useTransform(
-            mouseXSmooth,
-            (mouseXValue) => {
-              const containerHeight = containerRef.current?.offsetHeight || 100;
-              const maxMemoryHeight = containerHeight * 0.7;
-
-              if (activeMemoryId === memory.id) return maxMemoryHeight;
-
-              const memoryCount = memoriesData.length;
-              const memoryPos = index / (memoryCount - 1);
-              const distance = Math.abs(mouseXValue - memoryPos);
-
-              const sigma = 1 / 15;
-              const gaussianFactor = Math.exp(-(distance ** 2) / (2 * sigma ** 2));
-              const minHeight = maxMemoryHeight * 0.4;
-              return minHeight + gaussianFactor * (maxMemoryHeight - minHeight);
-            }
-          );
-
-          // Spring-animated height with random offsets
-          const animatedHeight = useSpring(0, {
-            damping: randomOffsets[index].damping,
-            stiffness: randomOffsets[index].stiffness,
-            restDelta: 0.01
-          });
-
-          // Automatic reveal animation on mount
-          React.useEffect(() => {
-            const minHeight = getMinHeight();
-            const delay = randomOffsets[index].delay;
-
-            // Animate from 0 to minHeight with random delay
-            const controls = animate(animatedHeight, minHeight, {
-              type: "spring",
-              damping: randomOffsets[index].damping,
-              stiffness: randomOffsets[index].stiffness,
-              delay,
-            });
-
-            // After initial animation, follow targetHeight for mouse interaction
-            const timeout = setTimeout(() => {
-              const unsubscribe = targetHeight.on("change", (latestHeight) => {
-                animatedHeight.set(latestHeight);
-              });
-              return () => unsubscribe();
-            }, delay * 1000); // Match delay in ms
-
-            return () => {
-              controls.stop();
-              clearTimeout(timeout);
-            };
-          }, [animatedHeight, targetHeight, index]);
-
-          return (
-            <div
-              key={memory.id}
-              className="relative flex flex-col items-center px-1 min-w-[4px] cursor-pointer"
-              onMouseEnter={() => !activeMemoryId && setHoveredMemoryId(memory.id)}
-              onMouseLeave={() => !activeMemoryId && setHoveredMemoryId(null)}
-              onClick={() => {
-                setActiveMemoryId(memory.id === activeMemoryId ? null : memory.id);
-                if (memory.id !== activeMemoryId) {
-                  handleMemoryClick(memory);
-                }
-              }}
-            >
-              <motion.div
-                className="w-[2px] rounded-t-sm"
-                style={{
-                  height: animatedHeight,
-                  backgroundColor: activeMemoryId === memory.id
-                    ? "#ef4444"
-                    : closestMemoryId === memory.id
-                      ? "rgb(0, 0, 0)"
-                      : "rgb(220, 207, 185)"
-                }}
-              />
-            </div>
-          );
-        })}
+        {memoriesData.map((memory, index) => (
+          <MemoryItem
+            key={memory.id}
+            memory={memory}
+            index={index}
+            mouseXSmooth={mouseXSmooth}
+            randomOffsets={randomOffsets}
+            activeMemoryId={activeMemoryId}
+            closestMemoryId={closestMemoryId}
+            setHoveredMemoryId={setHoveredMemoryId}
+            setActiveMemoryId={setActiveMemoryId}
+            handleMemoryClick={handleMemoryClick}
+            getMinHeight={getMinHeight}
+            containerRef={containerRef}
+          />
+        ))}
       </div>
     </div>
   );

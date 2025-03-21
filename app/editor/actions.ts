@@ -23,7 +23,7 @@ export async function loadContent(fileName: string) {
     const filePath = getFilePath(fileName);
     const content = await readFile(filePath, "utf-8");
     return content;
-  } catch (error) {
+  } catch {
     // If file doesn't exist, create it with empty content
     const filePath = getFilePath(fileName);
     await writeFile(filePath, "", "utf-8");

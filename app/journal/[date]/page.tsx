@@ -7,7 +7,6 @@ import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -23,6 +22,7 @@ import { useParams } from "next/navigation";
 
 // Memoize the AppSidebar to prevent re-renders on navigation
 const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
+MemoizedAppSidebar.displayName = 'MemoizedAppSidebar';
 
 export default function JournalPage() {
   const params = useParams();
@@ -116,4 +116,4 @@ export default function JournalPage() {
       </SidebarInset>
     </SidebarProvider>
   );
-} 
+}

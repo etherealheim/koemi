@@ -7,7 +7,34 @@ export function useTextSelection(textareaRef: React.RefObject<HTMLTextAreaElemen
   const [selectedText, setSelectedText] = React.useState("");
   const selectionTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const handleSelectionChange = () => {
+  // Helper function to calculate text width
+  const getTextWidth = React.useCallback((element: HTMLTextAreaElement, text: string): number => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return 0;
+    
+    const style = getComputedStyle(element);
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    
+    return context.measureText(text).width;
+  }, []);
+  
+  // Helper function to calculate selection width
+  const getSelectionWidth = React.useCallback((element: HTMLTextAreaElement, start: number, end: number): number => {
+    const selectedText = element.value.substring(start, end);
+    return getTextWidth(element, selectedText);
+  }, [getTextWidth]);
+  
+  // Helper functions for padding
+  const getPaddingLeft = React.useCallback((element: HTMLTextAreaElement): number => {
+    return parseInt(getComputedStyle(element).paddingLeft) || 0;
+  }, []);
+  
+  const getPaddingTop = React.useCallback((element: HTMLTextAreaElement): number => {
+    return parseInt(getComputedStyle(element).paddingTop) || 0;
+  }, []);
+
+  const handleSelectionChange = React.useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -71,34 +98,7 @@ export function useTextSelection(textareaRef: React.RefObject<HTMLTextAreaElemen
         y: selectionY
       });
     }, 1000); // 1 second delay
-  };
-
-  // Helper function to calculate text width
-  const getTextWidth = (element: HTMLTextAreaElement, text: string): number => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) return 0;
-    
-    const style = getComputedStyle(element);
-    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-    
-    return context.measureText(text).width;
-  };
-  
-  // Helper function to calculate selection width
-  const getSelectionWidth = (element: HTMLTextAreaElement, start: number, end: number): number => {
-    const selectedText = element.value.substring(start, end);
-    return getTextWidth(element, selectedText);
-  };
-  
-  // Helper functions for padding
-  const getPaddingLeft = (element: HTMLTextAreaElement): number => {
-    return parseInt(getComputedStyle(element).paddingLeft) || 0;
-  };
-  
-  const getPaddingTop = (element: HTMLTextAreaElement): number => {
-    return parseInt(getComputedStyle(element).paddingTop) || 0;
-  };
+  }, [textareaRef, getSelectionWidth, getTextWidth, getPaddingLeft, getPaddingTop]);
 
   React.useEffect(() => {
     const handleSelectionChangeEvent = () => {
@@ -115,7 +115,7 @@ export function useTextSelection(textareaRef: React.RefObject<HTMLTextAreaElemen
         clearTimeout(selectionTimerRef.current);
       }
     };
-  }, []);
+  }, [handleSelectionChange]);
 
   return {
     toolbarPosition,

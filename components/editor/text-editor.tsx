@@ -13,7 +13,7 @@ export interface TextEditorProps
 }
 
 const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
-  ({ className, fileName = "example.md", ...props }, ref) => {
+  ({ className, fileName, ...props }, ref) => {
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
     const [showDropdown, setShowDropdown] = React.useState(false)
     const [slashPosition, setSlashPosition] = React.useState<number | null>(null)
@@ -22,8 +22,7 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
     // Custom hooks
     const { 
       toolbarPosition, 
-      selectedText, 
-      handleSelectionChange 
+      selectedText
     } = useTextSelection(textareaRef as React.RefObject<HTMLTextAreaElement>)
     
     const { 

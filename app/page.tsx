@@ -24,6 +24,7 @@ import CalendarCard from "@/components/dashboard/calendar-card"
 
 // Memoize the AppSidebar component to prevent unnecessary re-renders
 const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
+MemoizedAppSidebar.displayName = 'MemoizedAppSidebar';
 
 export default function Page() {
   const { setOpen: setCommandMenuOpen } = useCommandMenu();

@@ -17,11 +17,11 @@ export function EditorDropdown({ open, onOpenChange, onOptionSelect, position }:
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = React.useState(0);
   
-  const options = [
+  const options = React.useMemo(() => [
     { icon: Heading, label: "Heading", value: "# Heading " },
     { icon: List, label: "List", value: "- List item " },
     { icon: Quote, label: "Quote", value: "> Quote " }
-  ];
+  ], []);
   
   // Handle keyboard navigation
   React.useEffect(() => {

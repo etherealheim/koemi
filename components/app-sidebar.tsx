@@ -7,6 +7,8 @@ import {
   Map,
   PieChart,
 } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
@@ -24,7 +26,7 @@ import {
 const data = {
   user: {
     name: "etherealheim",
-    email: "etherealheim@proton.me",
+    email: "etherealheim@proton.me", 
     avatar: "/avatars/avatar.mp4",
   },
   navMain: [
@@ -140,15 +142,21 @@ function AppSidebarComponent({ ...props }: React.ComponentProps<typeof Sidebar>)
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/">
+              <Link href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-sidebar-primary text-sidebar-primary-foreground overflow-hidden">
-                  <img src="/avatars/acme.png" alt="Logo" className="max-w-full max-h-full object-contain" />
+                  <Image 
+                    src="/avatars/acme.png"
+                    alt="Logo"
+                    width={32}
+                    height={32}
+                    className="max-w-full max-h-full object-contain"
+                  />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Koemi</span>
                   <span className="truncate text-xs">Note-taking AI</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
