@@ -27,7 +27,7 @@ const data = {
   user: {
     name: "etherealheim",
     email: "etherealheim@proton.me", 
-    avatar: "/avatars/avatar.mp4",
+    avatar: "/avatars/avatar.jpeg",
   },
   navMain: [
     {

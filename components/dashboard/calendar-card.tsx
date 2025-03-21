@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, memo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Trash, Eye } from "lucide-react";
-import { DayContentProps } from "react-day-picker";
 import * as Portal from "@radix-ui/react-portal";
+import { Trash, Eye } from "lucide-react";
 
 interface JournalEntry {
   date: string;
@@ -22,16 +21,20 @@ interface ContextMenuProps {
   onClose: () => void;
 }
 
-// Simplified context menu using Portal
-const SimpleContextMenu = memo(({ open, x, y, date, onSelect, onDelete, onClose }: ContextMenuProps) => {
-  // Always set up event listeners with useEffect to avoid hooks conditional calls
+// Helper function to format a date consistently
+function formatDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Context menu component
+const ContextMenu = ({ open, x, y, date, onSelect, onDelete, onClose }: ContextMenuProps) => {
   useEffect(() => {
     if (!open) return;
     
-    const handleClickOutside = () => {
-      onClose();
-    };
-
+    const handleClickOutside = () => onClose();
     document.addEventListener("click", handleClickOutside);
     return () => document.removeEventListener("click", handleClickOutside);
   }, [open, onClose]);
@@ -73,110 +76,7 @@ const SimpleContextMenu = memo(({ open, x, y, date, onSelect, onDelete, onClose 
       </div>
     </Portal.Root>
   );
-});
-
-SimpleContextMenu.displayName = "SimpleContextMenu";
-
-const CustomDay = memo(
-  ({
-    date,
-    displayMonth,
-    hasEntry,
-    onDateSelect,
-    onDateDelete,
-    isNavigating,
-  }: DayContentProps & {
-    hasEntry: boolean;
-    onDateSelect: (date: Date) => void;
-    onDateDelete: (date: Date) => void;
-    isNavigating: boolean;
-  }) => {
-    // Move all hooks to the top level
-    const [contextMenuState, setContextMenuState] = useState({
-      open: false,
-      x: 0,
-      y: 0
-    });
-    
-    // Memoize these functions to avoid recreation on each render
-    const closeContextMenu = useCallback(() => {
-      setContextMenuState({
-        open: false,
-        x: 0,
-        y: 0
-      });
-    }, []);
-
-    const handleContextMenu = useCallback((e: React.MouseEvent) => {
-      e.preventDefault();
-      setContextMenuState({
-        open: true,
-        x: e.clientX,
-        y: e.clientY
-      });
-    }, []);
-    
-    const selectDay = useCallback((e: React.MouseEvent) => {
-      if (!date || isNavigating) {
-        e.preventDefault();
-        return;
-      }
-      e.preventDefault();
-      onDateSelect(date);
-    }, [date, isNavigating, onDateSelect]);
-    
-    // Early return for invalid dates
-    if (!date || !(date instanceof Date)) return null;
-
-    // Handle outside month dates
-    const isOutsideMonth =
-      displayMonth && date.getMonth() !== displayMonth.getMonth();
-    if (isOutsideMonth) {
-      return (
-        <div className="flex h-9 w-full items-center justify-center">
-          {date.getDate()}
-        </div>
-      );
-    }
-
-    // Basic day rendering for dates without entries
-    if (!hasEntry) {
-      return (
-        <div
-          className="flex h-9 w-full items-center justify-center rounded-md hover:bg-stone-900 cursor-pointer transition-colors"
-          onClick={selectDay}
-        >
-          {date.getDate()}
-        </div>
-      );
-    }
-
-    // Enhanced day rendering for dates with entries (with context menu)
-    return (
-      <>
-        <div
-          className="flex h-9 w-full items-center justify-center rounded-md bg-stone-800 text-stone-300 font-bold hover:bg-stone-700 cursor-pointer transition-colors"
-          onClick={selectDay}
-          onContextMenu={handleContextMenu}
-        >
-          {date.getDate()}
-        </div>
-        
-        <SimpleContextMenu
-          open={contextMenuState.open}
-          x={contextMenuState.x}
-          y={contextMenuState.y}
-          date={date}
-          onSelect={onDateSelect}
-          onDelete={onDateDelete}
-          onClose={closeContextMenu}
-        />
-      </>
-    );
-  }
-);
-
-CustomDay.displayName = "CustomDay";
+};
 
 export default function CalendarCard() {
   const router = useRouter();
@@ -185,9 +85,14 @@ export default function CalendarCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isToastActive, setIsToastActive] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isRecentlyCreated, setIsRecentlyCreated] = useState<string | null>(null);
   const navigationInProgress = useRef(false);
   const navigationTimer = useRef<NodeJS.Timeout | null>(null);
+  const [contextMenu, setContextMenu] = useState({
+    open: false,
+    x: 0,
+    y: 0,
+    date: new Date()
+  });
 
   // Load entries on component mount
   useEffect(() => {
@@ -196,9 +101,7 @@ export default function CalendarCard() {
         setIsLoading(true);
         const response = await fetch("/api/journal?list=true", {
           cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
+          headers: { 'Cache-Control': 'no-cache' }
         });
         
         if (!response.ok) {
@@ -227,64 +130,67 @@ export default function CalendarCard() {
     loadEntries();
   }, []);
 
+  // Add entry to state
+  const addEntry = useCallback((formattedDate: string) => {
+    setEntries(prev => {
+      // Don't add if already exists
+      if (prev.some(entry => entry.date === formattedDate)) {
+        return prev;
+      }
+      return [...prev, { date: formattedDate }];
+    });
+  }, []);
+
   // Handle selecting a date
   const handleSelect = useCallback(
     (selectedDate: Date) => {
-      if (!selectedDate || navigationInProgress.current) return;
-
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+      if (!selectedDate) return;
       
-      // Check if entry exists or was recently created
-      const entryExists = entries.some(entry => entry.date === formattedDate) || 
-                         isRecentlyCreated === formattedDate;
-
+      // Prevent rapid repeated clicks
+      if (navigationInProgress.current) {
+        console.log("Navigation already in progress, ignoring click");
+        return;
+      }
+      
+      // Format the date string consistently
+      const formattedDate = formatDateString(selectedDate);
+      console.log(`Selecting date: ${formattedDate}`);
+      
+      // Check if entry exists
+      const entryExists = entries.some(entry => entry.date === formattedDate);
+      
       // Set navigation flag to prevent duplicate calls
       navigationInProgress.current = true;
       
       // Clear any existing navigation timer
       if (navigationTimer.current) {
         clearTimeout(navigationTimer.current);
+        navigationTimer.current = null;
       }
-
-      // Navigate to the journal entry with a slight delay to debounce multiple clicks
-      navigationTimer.current = setTimeout(() => {
-        router.push(`/journal/${formattedDate}`);
-        setDate(selectedDate);
-        navigationInProgress.current = false;
-      }, 100);
-
-      // Only show toast for new entries and prevent duplicate toasts
-      if (!entryExists && !isToastActive) {
-        setIsToastActive(true);
-        setIsRecentlyCreated(formattedDate);
-        
-        // Add to entries so it shows as highlighted immediately
-        setEntries(prev => [...prev, { date: formattedDate }]);
-        
-        toast.success(
-          "Started a new journal for " +
-            selectedDate.toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-            })
-        );
-        
-        // Reset toast state after delay
-        setTimeout(() => {
-          setIsToastActive(false);
-        }, 2000);
+      
+      // Add entry to state immediately for visual feedback
+      if (!entryExists) {
+        addEntry(formattedDate);
+        console.log("New entry added to state:", formattedDate);
       }
+      
+      // Update the selected date immediately for visual feedback
+      setDate(selectedDate);
+      
+      // Navigate immediately in all cases
+      window.location.href = `/journal/${formattedDate}`;
     },
-    [entries, router, isToastActive, isRecentlyCreated]
+    [entries, addEntry]
   );
 
   // Handle deleting a journal entry
   const handleDelete = useCallback(
     async (selectedDate: Date) => {
       if (!selectedDate || isDeleting) return;
-
-      const formattedDate = selectedDate.toISOString().split("T")[0];
-      console.log("Attempting to delete entry:", formattedDate);
+      
+      // Format date consistently for deletion
+      const formattedDate = formatDateString(selectedDate);
+      console.log(`Deleting entry: ${formattedDate}`);
 
       try {
         setIsDeleting(true);
@@ -292,28 +198,20 @@ export default function CalendarCard() {
           `/api/journal?file=vault/journal/daily/${formattedDate}.md`,
           { 
             method: "DELETE",
-            headers: {
-              'Cache-Control': 'no-cache'
-            }
+            headers: { 'Cache-Control': 'no-cache' }
           }
         );
 
-        console.log("Delete response status:", response.status);
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error("Error response body:", errorText);
           throw new Error(`Failed to delete (${response.status}): ${errorText}`);
         }
 
         const result = await response.json();
-        console.log("Delete result:", result);
         
         if (result.success) {
           toast.success("Journal successfully deleted");
-          setEntries((prev) =>
-            prev.filter((entry) => entry.date !== formattedDate)
-          );
+          setEntries(prev => prev.filter(entry => entry.date !== formattedDate));
         } else {
           toast.error(result.error || "Couldn't delete this journal");
         }
@@ -327,42 +225,52 @@ export default function CalendarCard() {
     [isDeleting]
   );
 
-  const isDayWithEntry = useCallback(
-    (day: Date): boolean => {
-      if (!day) return false;
-      const formattedDay = day.toISOString().split("T")[0];
-      return entries.some((entry) => entry.date === formattedDay);
-    },
-    [entries]
-  );
+  // Convert entries to Date objects for the calendar
+  const entriesAsDates = useCallback(() => {
+    return entries.map(entry => {
+      const [year, month, day] = entry.date.split('-').map(Number);
+      return new Date(year, month - 1, day, 12); // Use noon to avoid timezone issues
+    });
+  }, [entries]);
 
-  const renderDay = useCallback(
-    (dayProps: DayContentProps) => {
-      const { date: dayDate } = dayProps;
-      if (!dayDate) return null;
+  // Handle right-click on a day
+  const handleDayContextMenu = useCallback((e: React.MouseEvent, day: Date) => {
+    e.preventDefault();
+    if (!day) return;
+    
+    setContextMenu({
+      open: true,
+      x: e.clientX,
+      y: e.clientY,
+      date: day
+    });
+  }, []);
 
-      return (
-        <CustomDay
-          {...dayProps}
-          hasEntry={isDayWithEntry(dayDate)}
-          onDateSelect={handleSelect}
-          onDateDelete={handleDelete}
-          isNavigating={navigationInProgress.current}
-        />
-      );
-    },
-    [isDayWithEntry, handleSelect, handleDelete, navigationInProgress]
-  );
+  // Close context menu
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(prev => ({ ...prev, open: false }));
+  }, []);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" onContextMenu={e => e.preventDefault()}>
       <Calendar
         mode="single"
         selected={date}
-        onSelect={(newDate) => newDate && handleSelect(newDate)}
+        onSelect={handleSelect}
         className="w-full bg-stone-950 text-stone-300 border-stone-800 rounded-md flex-1"
-        disabled={isLoading || navigationInProgress.current}
-        components={{ DayContent: renderDay }}
+        disabled={isLoading}
+        daysWithEntries={entriesAsDates()}
+        onDayContextMenu={handleDayContextMenu}
+      />
+
+      <ContextMenu
+        open={contextMenu.open}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        date={contextMenu.date}
+        onSelect={handleSelect}
+        onDelete={handleDelete}
+        onClose={closeContextMenu}
       />
     </div>
   );

@@ -42,30 +42,31 @@ export default function DateCard() {
       className="w-full bg-stone-950 border-stone-800 text-white hover:bg-stone-900 transition-colors cursor-pointer"
       onClick={handleClick}
     >
-      <CardContent className="flex flex-col items-left justify-center p-6">
+      <CardContent className="flex flex-col items-left justify-between h-full p-6">
+        <div>
+          <motion.p
+            className="text-xl font-medium text-stone-400 align-left"
+            variants={textVariants}
+            initial="hidden"
+            animate="visible"
+            custom={0}
+          >
+            {day}
+          </motion.p>
+          <motion.p
+            className="text-6xl font-semibold text-stone-300 mt-2"
+            variants={textVariants}
+            initial="hidden"
+            animate="visible"
+            custom={2}
+          >
+            {month} {date}
+          </motion.p>
+        </div>
         <motion.p
-          className="text-xl font-medium text-stone-400 align-left"
-          variants={textVariants}
-          initial="hidden"
-          animate="visible"
-          custom={0}
+          className="text-lg font-regular italic text-stone-600"
         >
-          {day}
-        </motion.p>
-        <motion.p
-          className="text-6xl font-semibold text-stone-300 mt-2"
-          variants={textVariants}
-          initial="hidden"
-          animate="visible"
-          custom={2}
-        >
-          {month} {date}
-        </motion.p>
-        <motion.p
-          className="text-lg font-regular italic text-stone-600 mt-10"
-        >
-          &ldquo;Be the change you want to see in the world.&rdquo;
-          - Mahatma Gandhi
+          &ldquo;Your users might not be humans anymore.&rdquo;
         </motion.p>
       </CardContent>
     </Card>
