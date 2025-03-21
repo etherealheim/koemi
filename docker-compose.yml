@@ -17,4 +17,10 @@ services:
       retries: 3
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.koemi.rule=Host(`koemi.local`)"
+      # Router for Tailscale network
+      - "traefik.http.routers.koemi-tailscale.rule=Host(`koemi.local`)"
+      - "traefik.http.routers.koemi-tailscale.entrypoints=web"
+      - "traefik.http.services.koemi-tailscale.loadbalancer.server.port=3000"
+      # Keep the original port accessible
+      - "traefik.http.routers.koemi-local.rule=Host(`localhost`)"
+      - "traefik.http.routers.koemi-local.entrypoints=web"
