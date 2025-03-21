@@ -13,6 +13,7 @@ export interface TextEditorProps
 }
 
 const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ({ className, fileName, ...props }, ref) => {
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
     const [showDropdown, setShowDropdown] = React.useState(false)
