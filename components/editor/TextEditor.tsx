@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { EditorDropdown } from "@/components/editor/dropdown"
-import { Toolbar } from "./toolbar"
-import { useTextSelection } from "./hooks/use-text-selection"
-import { useTextFormatting } from "./hooks/use-text-formatting"
+import { SlashMenu } from "@/components/editor/SlashMenu"
+import { Toolbar } from "./Toolbar"
+import { useToolbar } from "@/hooks/useToolbar"
+import { useSlashMenu } from "@/hooks/useSlashMenu"
 
 export interface TextEditorProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -24,13 +24,13 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
     const { 
       toolbarPosition, 
       selectedText
-    } = useTextSelection(textareaRef as React.RefObject<HTMLTextAreaElement>)
+    } = useToolbar(textareaRef as React.RefObject<HTMLTextAreaElement>)
     
     const { 
       handleBold, 
       handleItalic, 
       handleUnderline 
-    } = useTextFormatting(textareaRef as React.RefObject<HTMLTextAreaElement>, props.onChange)
+    } = useSlashMenu(textareaRef as React.RefObject<HTMLTextAreaElement>, props.onChange)
     
     // Hide dropdown when text is selected
     React.useEffect(() => {
@@ -262,7 +262,7 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
           selectedText={selectedText}
         />
         
-        <EditorDropdown 
+        <SlashMenu 
           open={showDropdown} 
           onOpenChange={setShowDropdown}
           onOptionSelect={handleOptionSelect}

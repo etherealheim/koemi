@@ -19,6 +19,13 @@ interface ToolbarProps {
   selectedText?: string;
 }
 
+interface ToolbarButton {
+  icon: React.ElementType;
+  label: string;
+  tooltip: string;
+  onClick: (selectedText: string) => void;
+}
+
 export function Toolbar({
   onBold,
   onItalic,
@@ -27,11 +34,10 @@ export function Toolbar({
   className,
   selectedText = "",
 }: ToolbarProps) {
-  // Add a ref and state to track the toolbar's dimensions
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const [toolbarDimensions, setToolbarDimensions] = React.useState({ width: 120, height: 40 });
 
-  // Measure the toolbar when it renders
+  // Measure toolbar when it renders
   React.useEffect(() => {
     if (toolbarRef.current && position) {
       const { width, height } = toolbarRef.current.getBoundingClientRect();
@@ -41,32 +47,42 @@ export function Toolbar({
 
   if (!position || !selectedText) return null;
 
-  const handleBold = (e: React.MouseEvent) => {
+  // Define toolbar buttons
+  const buttons: ToolbarButton[] = [
+    {
+      icon: Bold,
+      label: "Bold",
+      tooltip: "Bold (Markdown: **text**)",
+      onClick: onBold
+    },
+    {
+      icon: Italic,
+      label: "Italic",
+      tooltip: "Italic (Markdown: *text*)",
+      onClick: onItalic
+    },
+    {
+      icon: Underline,
+      label: "Underline",
+      tooltip: "Underline (Markdown: __text__)",
+      onClick: onUnderline
+    }
+  ];
+
+  // Handler factory for button clicks
+  const createClickHandler = (handler: (text: string) => void) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onBold(selectedText);
+    handler(selectedText);
   };
-
-  const handleItalic = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onItalic(selectedText);
-  };
-
-  const handleUnderline = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onUnderline(selectedText);
-  };
-
-  // Ensure toolbar stays within viewport
+  
+  // Calculate toolbar position to keep it within viewport
   const xPos = Math.min(
-    Math.max(position.x, toolbarDimensions.width / 2 + 10), // Prevent going off left edge
-    window.innerWidth - toolbarDimensions.width / 2 - 10 // Prevent going off right edge
+    Math.max(position.x, toolbarDimensions.width / 2 + 10),
+    window.innerWidth - toolbarDimensions.width / 2 - 10
   );
   
-  // Position above the selection with a gap
-  const yPos = Math.max(position.y - toolbarDimensions.height - 8, 10); // 8px gap, minimum 10px from top
+  const yPos = Math.max(position.y - toolbarDimensions.height - 8, 10);
 
   return (
     <div
@@ -78,53 +94,27 @@ export function Toolbar({
       style={{
         top: `${yPos}px`,
         left: `${xPos}px`,
-        transform: "translateX(-50%)", // Center horizontally over selection
+        transform: "translateX(-50%)",
         opacity: 1,
         transition: "opacity 0.2s ease-in-out"
       }}
     >
       <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleBold}
-              className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Bold"
-              type="button"
-            >
-              <Bold className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Bold (Markdown: **text**)</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleItalic}
-              className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Italic"
-              type="button"
-            >
-              <Italic className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Italic (Markdown: *text*)</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleUnderline}
-              className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Underline"
-              type="button"
-            >
-              <Underline className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Underline (Markdown: __text__)</TooltipContent>
-        </Tooltip>
+        {buttons.map((button) => (
+          <Tooltip key={button.label}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={createClickHandler(button.onClick)}
+                className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label={button.label}
+                type="button"
+              >
+                <button.icon className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{button.tooltip}</TooltipContent>
+          </Tooltip>
+        ))}
       </TooltipProvider>
     </div>
   );

@@ -5,14 +5,14 @@ import { Heading, List, Quote } from "lucide-react";
 import * as Portal from "@radix-ui/react-portal";
 import { cn } from "@/lib/utils";
 
-interface EditorDropdownProps {
+interface SlashMenuProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOptionSelect: (option: string) => void;
   position: { x: number; y: number } | null;
 }
 
-export function EditorDropdown({ open, onOpenChange, onOptionSelect, position }: EditorDropdownProps) {
+export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: SlashMenuProps) {
   // Track dropdown measurements
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = React.useState(0);
@@ -122,4 +122,4 @@ export function EditorDropdown({ open, onOpenChange, onOptionSelect, position }:
       </div>
     </Portal.Root>
   );
-} 
+}

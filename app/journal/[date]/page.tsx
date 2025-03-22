@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { TextComponent } from "@/components/text-component";
+import { TextEditor } from "@/components/editor/TextEditor";
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -27,7 +27,7 @@ MemoizedAppSidebar.displayName = 'MemoizedAppSidebar';
 
 export default function JournalPage() {
   const params = useParams();
-  const date = params.date as string;
+  const date = params?.date as string || "";
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fileName = `vault/journal/daily/${date}.md`;
@@ -47,8 +47,13 @@ export default function JournalPage() {
       }
     };
 
-    loadInitialContent();
-  }, [fileName]);
+    if (date) {
+      loadInitialContent();
+    } else {
+      setIsLoading(false);
+      setContent("");
+    }
+  }, [fileName, date]);
 
   const handleChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
@@ -67,11 +72,13 @@ export default function JournalPage() {
   };
 
   // Format date for display (e.g., "March 18, 2025")
-  const displayDate = new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  const displayDate = date 
+    ? new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : "Journal";
 
   return (
     <SidebarProvider>
@@ -103,7 +110,7 @@ export default function JournalPage() {
               <p>Loading...</p>
             </div>
           ) : (
-            <TextComponent
+            <TextEditor
               fileName={fileName}
               placeholder="Start writing in your journal..."
               className="min-h-[calc(100vh-6rem)] font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"

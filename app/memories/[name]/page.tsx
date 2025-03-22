@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { TextComponent } from "@/components/text-component";
+import { TextEditor } from "@/components/editor/TextEditor";
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -27,7 +27,7 @@ MemoizedAppSidebar.displayName = 'MemoizedAppSidebar';
 
 export default function MemoryPage() {
   const params = useParams();
-  const name = params.name as string;
+  const name = params?.name as string || "";
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fileName = `vault/memories/${name}.md`;
@@ -47,8 +47,13 @@ export default function MemoryPage() {
       }
     };
 
-    loadInitialContent();
-  }, [fileName]);
+    if (name) {
+      loadInitialContent();
+    } else {
+      setIsLoading(false);
+      setContent("");
+    }
+  }, [fileName, name]);
 
   const handleChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
@@ -68,9 +73,10 @@ export default function MemoryPage() {
 
   // Format name for display (e.g., "quantum-entanglement" to "Quantum Entanglement")
   const displayName = name
-    .split("-")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+    ? name.split("-")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+    : "Memory";
 
   return (
     <SidebarProvider>
@@ -102,7 +108,7 @@ export default function MemoryPage() {
               <p>Loading...</p>
             </div>
           ) : (
-            <TextComponent
+            <TextEditor
               fileName={fileName}
               placeholder="Start writing in your memory..."
               className="min-h-[calc(100vh-6rem)] font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"

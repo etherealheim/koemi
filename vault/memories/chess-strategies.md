@@ -2,22 +2,23 @@
 
 ## Overview
 
-This is a place to capture your thoughts, ideas, and reflections on Chess Strategies.
+This is ****a place to capture your thoughts, ideas, and reflections on Chess Strategies.
 
 ## Key Points
 
-- First important point about Chess Strategies
-- Second important insight
-- Questions to explore further
-- Connections to other topics
+- First impasddasdasdsfsdfsdfds
+**dsfsd fdsfasd **
+sdf 
+asdasdassadasdfsd... 
+*]# Resources*
 
-## Resources
+> Quote 
 
-- Books to read
+- Books to
 - People to connect with
-- Websites to explore
+- Websites to explor****e
 - Tools to try
 
-## Next Steps
+## Next Stepssdsdasddsfdflkglkkfdsdfdsfsdfsdf
 
-What would you like to learn or explore next about Chess Strategies?
+What would you like to learn or explore next about Chess Strategies?sffddfddf
