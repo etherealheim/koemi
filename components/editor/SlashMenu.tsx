@@ -17,7 +17,6 @@ interface MenuOption {
   icon?: React.ComponentType<{ className?: string }>;
   label?: string;
   value?: string;
-  isCommand?: boolean;
   type?: "separator" | "item";
 }
 
@@ -60,21 +59,32 @@ export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: Slas
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
+          // Find current position in non-separator indices
           const currentIndex = nonSeparatorIndices.indexOf(activeIndex);
-          const nextItemIndex = (currentIndex + 1) % nonSeparatorIndices.length;
+          // If not found or at end, go to first, otherwise go to next
+          const nextItemIndex = currentIndex === -1 || currentIndex === nonSeparatorIndices.length - 1
+            ? 0
+            : currentIndex + 1;
           setActiveIndex(nonSeparatorIndices[nextItemIndex]);
           break;
         case "ArrowUp":
           e.preventDefault();
+          // Find current position in non-separator indices
           const currIndex = nonSeparatorIndices.indexOf(activeIndex);
-          const prevItemIndex = (currIndex - 1 + nonSeparatorIndices.length) % nonSeparatorIndices.length;
+          // If not found or at beginning, go to last, otherwise go to previous
+          const prevItemIndex = currIndex <= 0
+            ? nonSeparatorIndices.length - 1
+            : currIndex - 1;
           setActiveIndex(nonSeparatorIndices[prevItemIndex]);
           break;
         case "Enter":
           e.preventDefault();
-          const selectedOption = options[activeIndex];
-          if (selectedOption.type !== "separator" && selectedOption.value) {
-            onOptionSelect(selectedOption.value);
+          // Only process if we have a valid active index
+          if (activeIndex >= 0 && activeIndex < options.length) {
+            const selectedOption = options[activeIndex];
+            if (selectedOption.type !== "separator" && selectedOption.value) {
+              onOptionSelect(selectedOption.value);
+            }
           }
           break;
       }

@@ -5,10 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -17,10 +14,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/ui/theme-toggle"
-import { Memories } from "@/components/dashboard/memories"
+import { Memories } from "@/components/dashboard/card-memories"
 import { useCommandMenu } from "@/components/command-menu"
-import DateCard from "@/components/dashboard/date-card"
-import CalendarCard from "@/components/dashboard/calendar-card"
+import CardCurrentDay from "@/components/dashboard/card-current-day"
+import CardCalendar from "@/components/dashboard/card-calendar"
+import CardNewChat from "@/components/dashboard/card-new-chat";
 
 // Memoize the AppSidebar component to prevent unnecessary re-renders
 const MemoizedAppSidebar = React.memo(() => <AppSidebar />);
@@ -42,7 +40,6 @@ export default function Page() {
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
                     Dashboard
-                    
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
@@ -65,11 +62,9 @@ export default function Page() {
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Memories className="w-full h-80" />
           <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <DateCard />
-            <div className="bg-stone-950 border border-stone-800 p-6 rounded-xl shadow-sm h-full">
-              <CalendarCard />
-            </div>
-            <div className="h-80 rounded-xl bg-muted" />
+            <CardCurrentDay />
+            <CardCalendar />
+            <CardNewChat />
           </div>
         </div>
       </SidebarInset>

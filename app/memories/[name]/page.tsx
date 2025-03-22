@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { TextEditor } from "@/components/editor/TextEditor";
 import { AppSidebar } from "@/components/app-sidebar"
+import { ChatInput } from "@/components/chat-input";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,6 +32,7 @@ export default function MemoryPage() {
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fileName = `vault/memories/${name}.mdx`;
+  const [isEditorPushed, setIsEditorPushed] = useState(false);
 
   useEffect(() => {
     const loadInitialContent = async () => {
@@ -71,6 +73,26 @@ export default function MemoryPage() {
     }
   };
 
+  const handleSendMessage = (message: string) => {
+    // Here you would implement your logic to process the chat message
+    console.log(`Message sent: ${message}`);
+    // For example, you could append the message to the current content
+    if (content !== null) {
+      const newContent = `${content}\n\n**Chat:** ${message}`;
+      setContent(newContent);
+      // Save the new content
+      fetch('/api/memory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newContent, fileName }),
+      }).catch(error => {
+        console.error("Failed to save content:", error);
+      });
+    }
+  };
+
   // Format name for display (e.g., "quantum-entanglement" to "Quantum Entanglement")
   const displayName = name
     ? name.split("-")
@@ -102,21 +124,37 @@ export default function MemoryPage() {
             <ModeToggle />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 relative">
           {isLoading || content === null ? (
             <div className="flex items-center justify-center h-full">
               <p>Loading...</p>
             </div>
           ) : (
-            <TextEditor
-              fileName={fileName}
-              placeholder="Start writing in your memory..."
-              className="min-h-[calc(100vh-6rem)] font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
-              value={content}
-              onChange={handleChange}
-              spellCheck={false}
-              disabled={isLoading}
-            />
+            <>
+              <TextEditor
+                fileName={fileName}
+                placeholder="Start writing in your memory..."
+                className={`font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4 ${
+                  isEditorPushed 
+                    ? "min-h-[calc(100vh-18rem)]" 
+                    : "min-h-[calc(100vh-6rem)]"
+                }`}
+                value={content}
+                onChange={handleChange}
+                spellCheck={false}
+                disabled={isLoading}
+              />
+              <div 
+                className="absolute bottom-0 left-0 right-0 z-10"
+                onMouseEnter={() => setIsEditorPushed(true)}
+                onMouseLeave={() => setIsEditorPushed(false)}
+              >
+                <ChatInput 
+                  onSend={handleSendMessage} 
+                  modelName="Memory Assistant"
+                />
+              </div>
+            </>
           )}
         </div>
       </SidebarInset>

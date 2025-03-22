@@ -2,10 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { BorderTrail } from '@/components/mp/border-trail';
 
-export default function DateCard() {
+export default function CardCurrentDay() {
   const router = useRouter();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,10 +41,12 @@ export default function DateCard() {
 
   return (
     <Card 
-      className="w-full bg-stone-950 border-stone-800 text-white hover:bg-stone-900 transition-colors cursor-pointer"
+      className="w-full bg-stone-950 border-stone-800 text-white hover:bg-stone-900 transition-colors cursor-pointer relative overflow-hidden"
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <CardContent className="flex flex-col items-left justify-between h-full p-6">
+      <CardContent className="flex flex-col items-left justify-between h-full px-6 py-0 relative z-10">
         <div>
           <motion.p
             className="text-xl font-medium text-stone-400 align-left"
@@ -69,6 +73,15 @@ export default function DateCard() {
           &ldquo;Your users might not be humans anymore.&rdquo;
         </motion.p>
       </CardContent>
+      {isHovered && (
+        <BorderTrail
+          style={{
+            boxShadow:
+              '0px 0px 60px 30px rgb(255 255 255 / 50%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
+          }}
+          size={100}
+        />
+      )}
     </Card>
   );
 }

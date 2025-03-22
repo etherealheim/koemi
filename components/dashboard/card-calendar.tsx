@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import * as Portal from "@radix-ui/react-portal";
 import { Trash, Eye } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BorderTrail } from '@/components/mp/border-trail';
 
 interface JournalEntry {
   date: string;
@@ -78,13 +80,14 @@ const ContextMenu = ({ open, x, y, date, onSelect, onDelete, onClose }: ContextM
   );
 };
 
-export default function CalendarCard() {
+export default function CardCalendar() {
   const router = useRouter();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isToastActive, setIsToastActive] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const navigationInProgress = useRef(false);
   const navigationTimer = useRef<NodeJS.Timeout | null>(null);
   const [contextMenu, setContextMenu] = useState({
@@ -252,26 +255,43 @@ export default function CalendarCard() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col" onContextMenu={e => e.preventDefault()}>
-      <Calendar
-        mode="single"
-        selected={date}
-        onSelect={handleSelect}
-        className="w-full bg-stone-950 text-stone-300 border-stone-800 rounded-md flex-1"
-        disabled={isLoading}
-        daysWithEntries={entriesAsDates()}
-        onDayContextMenu={handleDayContextMenu}
-      />
+    <Card 
+      className="bg-stone-950 border-stone-800 text-white h-full p-6 relative overflow-hidden transition-colors cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <CardContent className="p-0">
+        <div className="h-full flex flex-col relative z-10" onContextMenu={e => e.preventDefault()}>
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={handleSelect}
+            className="w-full bg-stone-950 text-stone-300 border-stone-800 rounded-md flex-1"
+            disabled={isLoading}
+            daysWithEntries={entriesAsDates()}
+            onDayContextMenu={handleDayContextMenu}
+          />
 
-      <ContextMenu
-        open={contextMenu.open}
-        x={contextMenu.x}
-        y={contextMenu.y}
-        date={contextMenu.date}
-        onSelect={handleSelect}
-        onDelete={handleDelete}
-        onClose={closeContextMenu}
-      />
-    </div>
+          <ContextMenu
+            open={contextMenu.open}
+            x={contextMenu.x}
+            y={contextMenu.y}
+            date={contextMenu.date}
+            onSelect={handleSelect}
+            onDelete={handleDelete}
+            onClose={closeContextMenu}
+          />
+        </div>
+      </CardContent>
+      {isHovered && (
+        <BorderTrail
+          style={{
+            boxShadow:
+              '0px 0px 60px 30px rgb(255 255 255 / 50%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
+          }}
+          size={100}
+        />
+      )}
+    </Card>
   );
 }

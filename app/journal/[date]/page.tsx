@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { TextEditor } from "@/components/editor/TextEditor";
 import { AppSidebar } from "@/components/app-sidebar"
+import { ChatInput } from "@/components/chat-input";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,6 +32,7 @@ export default function JournalPage() {
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const fileName = `vault/journal/daily/${date}.mdx`;
+  const [isEditorPushed, setIsEditorPushed] = useState(false);
 
   useEffect(() => {
     const loadInitialContent = async () => {
@@ -71,6 +73,26 @@ export default function JournalPage() {
     }
   };
 
+  const handleSendMessage = (message: string) => {
+    // Here you would implement your logic to process the chat message
+    console.log(`Message sent: ${message}`);
+    // For example, you could append the message to the current content
+    if (content !== null) {
+      const newContent = `${content}\n\n**Chat:** ${message}`;
+      setContent(newContent);
+      // Save the new content
+      fetch('/api/journal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newContent, fileName }),
+      }).catch(error => {
+        console.error("Failed to save content:", error);
+      });
+    }
+  };
+
   // Format date for display (e.g., "March 18, 2025")
   const displayDate = date 
     ? new Date(date).toLocaleDateString('en-US', {
@@ -104,21 +126,27 @@ export default function JournalPage() {
             <ModeToggle />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 relative">
           {isLoading || content === null ? (
             <div className="flex items-center justify-center h-full">
               <p>Loading...</p>
             </div>
           ) : (
-            <TextEditor
-              fileName={fileName}
-              placeholder="Start writing in your journal..."
-              className="min-h-[calc(100vh-6rem)] font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4"
-              value={content}
-              onChange={handleChange}
-              spellCheck={false}
-              disabled={isLoading}
-            />
+            <>
+              <TextEditor
+                fileName={fileName}
+                placeholder="Start writing in your journal..."
+                className={`font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4 h-[calc(100vh-14rem)] pb-16`}
+                value={content}
+                onChange={handleChange}
+                spellCheck={false}
+                disabled={isLoading}
+              />
+              <ChatInput 
+                  onSend={handleSendMessage} 
+                  modelName="Journal Assistant"
+              />
+            </>
           )}
         </div>
       </SidebarInset>
