@@ -30,7 +30,7 @@ export default function JournalPage() {
   const date = params?.date as string || "";
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const fileName = `vault/journal/daily/${date}.md`;
+  const fileName = `vault/journal/daily/${date}.mdx`;
 
   useEffect(() => {
     const loadInitialContent = async () => {

@@ -30,7 +30,7 @@ export default function MemoryPage() {
   const name = params?.name as string || "";
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const fileName = `vault/memories/${name}.md`;
+  const fileName = `vault/memories/${name}.mdx`;
 
   useEffect(() => {
     const loadInitialContent = async () => {

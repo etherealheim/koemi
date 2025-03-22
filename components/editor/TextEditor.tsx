@@ -6,11 +6,19 @@ import { SlashMenu } from "@/components/editor/SlashMenu"
 import { Toolbar } from "./Toolbar"
 import { useToolbar } from "@/hooks/useToolbar"
 import { useSlashMenu } from "@/hooks/useSlashMenu"
+import { Eye, EyeOff, Split } from "lucide-react"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import rehypeRaw from "rehype-raw"
+import rehypeSanitize from "rehype-sanitize"
+import { Button } from "@/components/ui/button"
 
 export interface TextEditorProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   fileName?: string;
 }
+
+type ViewMode = "edit" | "preview" | "split";
 
 const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,6 +27,8 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
     const [showDropdown, setShowDropdown] = React.useState(false)
     const [slashPosition, setSlashPosition] = React.useState<number | null>(null)
     const [dropdownPosition, setDropdownPosition] = React.useState<{ x: number, y: number } | null>(null)
+    const [viewMode, setViewMode] = React.useState<ViewMode>("edit")
+    const [markdownContent, setMarkdownContent] = React.useState("")
     
     // Custom hooks
     const { 
@@ -26,11 +36,7 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
       selectedText
     } = useToolbar(textareaRef as React.RefObject<HTMLTextAreaElement>)
     
-    const { 
-      handleBold, 
-      handleItalic, 
-      handleUnderline 
-    } = useSlashMenu(textareaRef as React.RefObject<HTMLTextAreaElement>, props.onChange)
+    const slashMenuHandlers = useSlashMenu(textareaRef as React.RefObject<HTMLTextAreaElement>, props.onChange)
     
     // Hide dropdown when text is selected
     React.useEffect(() => {
@@ -40,6 +46,21 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
         setDropdownPosition(null)
       }
     }, [selectedText, showDropdown])
+    
+    // Initial content setup for text area value
+    React.useEffect(() => {
+      if (props.value) {
+        setMarkdownContent(props.value.toString());
+      }
+    }, [props.value]);
+    
+    // Update markdown content when textarea value changes
+    React.useEffect(() => {
+      if (viewMode !== "edit") {
+        const content = textareaRef.current?.value || props.value?.toString() || "";
+        setMarkdownContent(content);
+      }
+    }, [viewMode, props.value]);
     
     // Function to calculate cursor position
     const calculateCursorPosition = (cursorPosition: number) => {
@@ -161,6 +182,11 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
         props.onChange(e)
       }
       
+      // Update markdown content in real-time
+      if (viewMode !== "edit") {
+        setMarkdownContent(e.target.value);
+      }
+      
       // Check if we need to dismiss the dropdown
       if (showDropdown) {
         checkShouldDismissDropdown()
@@ -180,6 +206,11 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
         if (props.onChange) {
           const event = { target: { value: newText } } as React.ChangeEvent<HTMLTextAreaElement>
           props.onChange(event)
+        }
+        
+        // Update markdown content directly 
+        if (viewMode !== "edit") {
+          setMarkdownContent(newText);
         }
         
         // Focus and set cursor position after the inserted option
@@ -223,51 +254,199 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
       }
     }, [])
 
+    // Toggle between edit, preview, and split modes
+    const toggleViewMode = (mode: ViewMode) => {
+      setViewMode(mode);
+      
+      // Update markdown content when switching to preview or split mode
+      if (mode !== "edit") {
+        const content = textareaRef.current?.value || props.value?.toString() || "";
+        setMarkdownContent(content);
+      }
+    };
+    
+    // Render Markdown components
+    const MarkdownComponents = {
+      // Override h1 with custom styling
+      h1: ({ node, ...props }: any) => (
+        <h1 className="text-2xl font-bold tracking-tight mt-6 mb-2" {...props} />
+      ),
+      // Override h2 with custom styling
+      h2: ({ node, ...props }: any) => (
+        <h2 className="text-xl font-semibold tracking-tight mt-6 mb-2" {...props} />
+      ),
+      // Override h3 with custom styling
+      h3: ({ node, ...props }: any) => (
+        <h3 className="text-lg font-medium tracking-tight mt-4 mb-2" {...props} />
+      ),
+      // Override link with custom styling
+      a: ({ node, ...props }: any) => (
+        <a className="text-blue-400 hover:text-blue-300 underline" {...props} />
+      ),
+      // Override code with custom styling
+      code: ({ node, inline, ...props }: any) => (
+        inline 
+          ? <code className="bg-zinc-800 rounded px-1 py-0.5 text-sm" {...props} />
+          : <code className="block bg-zinc-800/50 rounded p-4 my-4 overflow-x-auto" {...props} />
+      ),
+      // Override blockquote with custom styling
+      blockquote: ({ node, ...props }: any) => (
+        <blockquote className="border-l-4 border-zinc-700 pl-4 italic my-4" {...props} />
+      ),
+      // Override unordered lists (bullet points)
+      ul: ({ node, ...props }: any) => (
+        <ul className="pl-6 my-4 space-y-2 list-disc" {...props} />
+      ),
+      // Override ordered lists (numbered)
+      ol: ({ node, ...props }: any) => (
+        <ol className="pl-6 my-4 space-y-2 list-decimal" {...props} />
+      ),
+      // Override list items
+      li: ({ node, ...props }: any) => (
+        <li className="pl-1 marker:text-zinc-400" {...props} />
+      ),
+      // Override task lists
+      input: ({ node, ...props }: any) => (
+        props.type === 'checkbox' ? (
+          <input 
+            {...props} 
+            disabled={true} 
+            className="mr-1 h-3.5 w-3.5 rounded border-zinc-600 text-blue-500 focus:ring-0 focus:ring-offset-0 accent-blue-500"
+          />
+        ) : (
+          <input {...props} />
+        )
+      ),
+    };
+
     return (
-      <div className="relative">
-        <textarea
-          ref={(element) => {
-            if (typeof ref === "function") ref(element)
-            else if (ref) ref.current = element
-            textareaRef.current = element
-          }}
-          className={cn(
-            "flex w-full rounded-md border border-zinc-900 bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
-            "placeholder:text-zinc-600 focus:placeholder:opacity-0 placeholder:transition-all duration-150",
-            "text-zinc-100",
-            className
+      <div className="relative flex flex-col gap-2">
+        <div className="flex justify-end mb-1 gap-1">
+          <div className="flex bg-zinc-900/50 rounded-md p-0.5">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => toggleViewMode("edit")}
+              className={cn(
+                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
+                viewMode === "edit" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
+              )}
+            >
+              <EyeOff className="h-3.5 w-3.5" />
+              <span>Edit</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => toggleViewMode("preview")}
+              className={cn(
+                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
+                viewMode === "preview" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
+              )}
+            >
+              <Eye className="h-3.5 w-3.5" />
+              <span>Preview</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => toggleViewMode("split")}
+              className={cn(
+                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
+                viewMode === "split" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
+              )}
+            >
+              <Split className="h-3.5 w-3.5" />
+              <span>Split</span>
+            </Button>
+          </div>
+        </div>
+
+        <div className={cn("relative w-full", viewMode === "split" ? "grid grid-cols-2 gap-4" : "")}>
+          {/* Editor */}
+          {(viewMode === "edit" || viewMode === "split") && (
+            <div className="relative">
+              <textarea
+                ref={(element) => {
+                  if (typeof ref === "function") ref(element)
+                  else if (ref) ref.current = element
+                  textareaRef.current = element
+                }}
+                className={cn(
+                  "flex w-full rounded-md border border-zinc-900 bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
+                  "placeholder:text-zinc-600 focus:placeholder:opacity-0 placeholder:transition-all duration-150",
+                  "text-zinc-100",
+                  className
+                )}
+                style={{
+                  lineHeight: "1.5",
+                  padding: "16px 24px",
+                  caretColor: "transparent",
+                  height: viewMode === "split" ? "400px" : undefined
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.caretColor = "auto";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.caretColor = "transparent";
+                }}
+                onKeyDown={handleKeyDown}
+                onChange={handleChange}
+                placeholder="Write, press '/' for commands"
+                {...props}
+              />
+              
+              <Toolbar 
+                onBold={slashMenuHandlers.handleBold}
+                onItalic={slashMenuHandlers.handleItalic}
+                onUnderline={slashMenuHandlers.handleUnderline}
+                onLink={slashMenuHandlers.handleLink}
+                onCode={slashMenuHandlers.handleCode}
+                onHeading1={slashMenuHandlers.handleHeading1}
+                onHeading2={slashMenuHandlers.handleHeading2}
+                onQuote={slashMenuHandlers.handleQuote}
+                onList={slashMenuHandlers.handleBulletList}
+                onOrderedList={slashMenuHandlers.handleNumberedList}
+                position={toolbarPosition}
+                className="z-50"
+                selectedText={selectedText}
+              />
+              
+              <SlashMenu 
+                open={showDropdown} 
+                onOpenChange={setShowDropdown}
+                onOptionSelect={handleOptionSelect}
+                position={dropdownPosition}
+              />
+            </div>
           )}
-          style={{
-            lineHeight: "1.5",
-            padding: "16px 24px",
-            caretColor: "transparent",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.caretColor = "auto";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.caretColor = "transparent";
-          }}
-          onKeyDown={handleKeyDown}
-          onChange={handleChange}
-          {...props}
-        />
-        
-        <Toolbar 
-          onBold={handleBold}
-          onItalic={handleItalic}
-          onUnderline={handleUnderline}
-          position={toolbarPosition}
-          className="z-50"
-          selectedText={selectedText}
-        />
-        
-        <SlashMenu 
-          open={showDropdown} 
-          onOpenChange={setShowDropdown}
-          onOptionSelect={handleOptionSelect}
-          position={dropdownPosition}
-        />
+          
+          {/* Preview */}
+          {(viewMode === "preview" || viewMode === "split") && (
+            <div 
+              className={cn(
+                "rounded-md border border-zinc-900 bg-background px-6 py-4",
+                "prose prose-invert prose-zinc prose-headings:font-semibold max-w-none",
+                "prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5",
+                viewMode === "preview" ? "w-full" : ""
+              )}
+              style={{ 
+                height: viewMode === "split" ? "400px" : undefined,
+                overflowY: "auto"
+              }}
+            >
+              <ReactMarkdown 
+                remarkPlugins={[remarkGfm]} 
+                rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                components={MarkdownComponents}
+              >
+                {markdownContent}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
       </div>
     )
   }

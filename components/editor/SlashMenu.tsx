@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Heading, List, Quote } from "lucide-react";
+import { Heading, List, Quote, Hash, Link, Image, Code, Table, Check, Type, Sparkles, ChevronRight, FileText } from "lucide-react";
 import * as Portal from "@radix-ui/react-portal";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 interface SlashMenuProps {
   open: boolean;
@@ -12,16 +13,44 @@ interface SlashMenuProps {
   position: { x: number; y: number } | null;
 }
 
+interface MenuOption {
+  icon?: React.ComponentType<{ className?: string }>;
+  label?: string;
+  value?: string;
+  isCommand?: boolean;
+  type?: "separator" | "item";
+}
+
 export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: SlashMenuProps) {
   // Track dropdown measurements
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = React.useState(0);
   
-  const options = React.useMemo(() => [
-    { icon: Heading, label: "Heading", value: "# Heading " },
-    { icon: List, label: "List", value: "- List item " },
-    { icon: Quote, label: "Quote", value: "> Quote " }
+  const options: MenuOption[] = React.useMemo(() => [
+    { icon: Sparkles, label: "Generate summary", value: "/ai summary", type: "item" },
+    { type: "separator" },
+    { icon: Heading, label: "Heading 1", value: "# Heading ", type: "item" },
+    { icon: Heading, label: "Heading 2", value: "## Heading ", type: "item" },
+    { icon: Heading, label: "Heading 3", value: "### Heading ", type: "item" },
+    { icon: List, label: "Bullet List", value: "- List item ", type: "item" },
+    { icon: Check, label: "Task List", value: "- [ ] Task ", type: "item" },
+    { icon: Type, label: "Numbered List", value: "1. List item ", type: "item" },
+    { icon: Quote, label: "Quote", value: "> Quote ", type: "item" },
+    { icon: Code, label: "Code Block", value: "```\ncode\n```", type: "item" },
+    { icon: Code, label: "Inline Code", value: "`code`", type: "item" },
+    { icon: Link, label: "Link", value: "[link text](https://example.com)", type: "item" },
+    { icon: FileText, label: "Wiki Link", value: "[[link]]", type: "item" },
+    { icon: Image, label: "Image", value: "![alt text](https://example.com/image.jpg)", type: "item" },
+    { icon: Hash, label: "Footnote", value: "Text with footnote[^1]\n\n[^1]: Footnote content", type: "item" },
+    { icon: Table, label: "Table", value: "| Header | Header |\n| ------ | ------ |\n| Cell   | Cell   |", type: "item" },
   ], []);
+  
+  // Get non-separator items for navigation
+  const nonSeparatorIndices = React.useMemo(() => {
+    return options
+      .map((option, index) => option.type !== "separator" ? index : -1)
+      .filter(index => index !== -1);
+  }, [options]);
   
   // Handle keyboard navigation
   React.useEffect(() => {
@@ -31,27 +60,38 @@ export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: Slas
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          setActiveIndex(prev => (prev + 1) % options.length);
+          const currentIndex = nonSeparatorIndices.indexOf(activeIndex);
+          const nextItemIndex = (currentIndex + 1) % nonSeparatorIndices.length;
+          setActiveIndex(nonSeparatorIndices[nextItemIndex]);
           break;
         case "ArrowUp":
           e.preventDefault();
-          setActiveIndex(prev => (prev - 1 + options.length) % options.length);
+          const currIndex = nonSeparatorIndices.indexOf(activeIndex);
+          const prevItemIndex = (currIndex - 1 + nonSeparatorIndices.length) % nonSeparatorIndices.length;
+          setActiveIndex(nonSeparatorIndices[prevItemIndex]);
           break;
         case "Enter":
           e.preventDefault();
-          onOptionSelect(options[activeIndex].value);
+          const selectedOption = options[activeIndex];
+          if (selectedOption.type !== "separator" && selectedOption.value) {
+            onOptionSelect(selectedOption.value);
+          }
           break;
       }
     };
     
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, activeIndex, onOptionSelect, options]);
+  }, [open, activeIndex, onOptionSelect, options, nonSeparatorIndices]);
   
   // Reset active index when dropdown opens
   React.useEffect(() => {
-    if (open) setActiveIndex(0);
-  }, [open]);
+    if (open) {
+      // Set the first non-separator as active
+      const firstOptionIndex = options.findIndex(opt => opt.type !== "separator");
+      setActiveIndex(firstOptionIndex >= 0 ? firstOptionIndex : 0);
+    }
+  }, [open, options]);
   
   // Close on click outside
   React.useEffect(() => {
@@ -66,6 +106,16 @@ export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: Slas
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open, onOpenChange]);
+  
+  // Scroll active item into view when navigating with keyboard
+  React.useEffect(() => {
+    if (open && dropdownRef.current) {
+      const activeElement = dropdownRef.current.querySelector(`[data-index="${activeIndex}"]`);
+      if (activeElement) {
+        activeElement.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [activeIndex, open]);
   
   if (!open || !position) return null;
   
@@ -83,38 +133,56 @@ export function SlashMenu({ open, onOpenChange, onOptionSelect, position }: Slas
       >
         <div 
           className={cn(
-            "z-50 min-w-[8rem] overflow-hidden rounded-md border p-1 shadow-md",
+            "z-50 min-w-[12rem] overflow-hidden rounded-md border p-1 shadow-md",
             "border-zinc-800 bg-zinc-950/85 backdrop-blur-sm text-zinc-100",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
             "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
             "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-            "max-h-[300px] origin-[var(--radix-dropdown-menu-content-transform-origin)]"
+            "max-h-[320px] origin-[var(--radix-dropdown-menu-content-transform-origin)] overflow-y-auto"
           )}
           data-state="open"
           data-side="bottom"
         >
           {options.map((option, index) => {
-            const Icon = option.icon;
+            // Render a separator
+            if (option.type === "separator") {
+              return <Separator key={`separator-${index}`} className="my-1 bg-zinc-800" />;
+            }
+            
+            // Skip if missing required props
+            if (!option.icon || !option.label || !option.value) {
+              return null;
+            }
+            
+            const IconComponent = option.icon;
+            
             return (
               <div
                 key={option.label}
+                data-index={index}
                 className={cn(
-                  "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-                  "transition-colors gap-2",
-                  "[&_svg]:size-4 [&_svg]:shrink-0",
+                  "relative flex justify-between cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+                  "transition-colors gap-2 group",
+                  "[&_svg:first-child]:size-4 [&_svg:first-child]:shrink-0",
                   index === activeIndex 
                     ? "bg-zinc-800 text-zinc-50" 
-                    : "text-zinc-400 focus:bg-zinc-800 focus:text-zinc-50"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-50"
                 )}
-                onClick={() => onOptionSelect(option.value)}
+                onClick={() => option.value && onOptionSelect(option.value)}
                 onMouseEnter={() => setActiveIndex(index)}
                 role="menuitem"
                 tabIndex={-1}
               >
-                <Icon className="size-4" />
-                {option.label}
+                <div className="flex items-center gap-2">
+                  <IconComponent className="size-4" />
+                  <span>
+                    {option.label}
+                  </span>
+                </div>
+                
+                <ChevronRight className="size-3.5 opacity-0 text-zinc-500 group-hover:opacity-100 transition-opacity" />
               </div>
             );
           })}

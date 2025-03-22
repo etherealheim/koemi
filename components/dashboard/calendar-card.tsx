@@ -195,7 +195,7 @@ export default function CalendarCard() {
       try {
         setIsDeleting(true);
         const response = await fetch(
-          `/api/journal?file=vault/journal/daily/${formattedDate}.md`,
+          `/api/journal?file=vault/journal/daily/${formattedDate}.mdx`,
           { 
             method: "DELETE",
             headers: { 'Cache-Control': 'no-cache' }

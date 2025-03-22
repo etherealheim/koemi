@@ -62,9 +62,9 @@ export async function GET(request: NextRequest) {
       } else {
         const files = await readdir(dirPath);
         const entries = files
-          .filter((file) => file.endsWith(".md"))
+          .filter((file) => file.endsWith(".mdx"))
           .map((file) => ({
-            name: file.replace(".md", ""),
+            name: file.replace(".mdx", ""),
           }));
         responseData = { entries };
       }

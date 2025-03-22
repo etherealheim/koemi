@@ -235,7 +235,7 @@ export function Memories({ memories = [], className }: MemoriesProps) {
         },
         body: JSON.stringify({ 
           content, 
-          fileName: `vault/memories/${memoryName}.md` 
+          fileName: `vault/memories/${memoryName}.mdx` 
         }),
       });
       

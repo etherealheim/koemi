@@ -62,8 +62,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
       const files = await readdir(dirPath);
       const entries = files
-        .filter((file) => file.endsWith(".md"))
-        .map((file) => ({ date: file.replace(".md", "") }));
+        .filter((file) => file.endsWith(".mdx"))
+        .map((file) => ({ date: file.replace(".mdx", "") }));
       responseData = { entries };
     } catch (error) {
       console.error("Error listing journal entries:", error);
