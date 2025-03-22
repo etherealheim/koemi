@@ -97,15 +97,11 @@ export default function ChatPage() {
         <Breadcrumb className="hidden md:flex">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Home</BreadcrumbLink>
+              <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/chat">Chat</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{chatId.split('-')[0]}</BreadcrumbPage>
+              <BreadcrumbPage>Discussion about corrupted government</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -113,7 +109,6 @@ export default function ChatPage() {
           <ModeToggle />
         </div>
       </header>
-      <Separator />
       <div className="flex flex-1 flex-col h-[calc(100vh-60px)]">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-4 max-w-3xl mx-auto">
@@ -132,7 +127,7 @@ export default function ChatPage() {
                   <Avatar className="h-8 w-8">
                     {message.role === "assistant" ? (
                       <>
-                        <AvatarImage src="/assistant-avatar.png" alt="AI" />
+                        <AvatarImage src="/logo.png" alt="AI" />
                         <AvatarFallback>AI</AvatarFallback>
                       </>
                     ) : (

@@ -365,6 +365,7 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
         </div>
 
         <div className={cn("relative w-full", viewMode === "split" ? "grid grid-cols-2 gap-4" : "")}>
+          
           {/* Editor */}
           {(viewMode === "edit" || viewMode === "split") && (
             <div className="relative">

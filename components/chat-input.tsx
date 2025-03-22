@@ -14,6 +14,7 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState('');
   const [isHovering, setIsHovering] = useState(false);
+  const [isHandleHovered, setIsHandleHovered] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controls = useAnimation();
@@ -105,8 +106,8 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-[var(--sidebar-width,0px)] right-0 w-[calc(100%-var(--sidebar-width,0px))] mx-auto h-48 pointer-events-none" ref={containerRef}>
-      <div className="absolute bottom-2 left-0 right-0 w-full max-w-[calc(100%-2rem)] mx-auto px-4">
+    <div className="grid grid-cols-12 h-48 pointer-events-none" ref={containerRef}>
+      <div className="col-span-12 bottom-2">
         <motion.div
           className="relative w-full pointer-events-auto"
           initial="collapsed"
@@ -128,8 +129,14 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                   onClick={() => setIsHovering(true)}
+                  onMouseEnter={() => setIsHandleHovered(true)}
+                  onMouseLeave={() => setIsHandleHovered(false)}
                 >
-                  <div className="w-36 h-1.5 rounded-full bg-white/30 hover:bg-white/50 transition-colors" />
+                  <motion.div 
+                    className="w-36 h-1.5 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
+                    animate={{ opacity: isHandleHovered ? 0.8 : 0.3 }}
+                    transition={{ duration: 0.3 }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
