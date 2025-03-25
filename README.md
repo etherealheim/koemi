@@ -14,4 +14,4 @@ This isn’t about selling or fitting a niche. As a designer, I’m building Koe
 - [ ] Add open-source voice assistant
 - [ ] Explore Fabric functionality
 - [ ] Personalizing options: Changing Avatar, changing name
-- [ ] Create a Logo
+- [x] Create a Logo

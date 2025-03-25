@@ -1,18 +1,23 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, useAnimation, AnimatePresence } from 'framer-motion';
-import { Mic, Paperclip, Send } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useState, useRef, useEffect } from "react";
+import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { Mic, Paperclip, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   modelName?: string;
+  onHeightChange?: (height: number) => void;
 }
 
-export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  modelName = "Assistant",
+  onHeightChange,
+}: ChatInputProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [isHovering, setIsHovering] = useState(false);
   const [isHandleHovered, setIsHandleHovered] = useState(false);
   const handleRef = useRef<HTMLDivElement>(null);
@@ -20,21 +25,43 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
   const controls = useAnimation();
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
+
+  // Report height changes to parent
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current && onHeightChange) {
+        const height = containerRef.current.offsetHeight;
+        onHeightChange(height);
+      }
+    };
+
+    updateHeight(); // Initial height
+    const observer = new ResizeObserver(updateHeight);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, [isExpanded, onHeightChange]);
 
   const handleSend = () => {
     if (message.trim()) {
       onSend(message);
-      setMessage('');
+      setMessage("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -63,7 +90,7 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
           e.clientX <= rect.right &&
           e.clientY >= rect.top - 50 &&
           e.clientY <= rect.bottom + 50;
-        
+
         if (isNearHandle) {
           resetCollapseTimer();
           if (!isHovering) {
@@ -75,9 +102,9 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
       }
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener("mousemove", handleMouseMove);
       resetCollapseTimer();
     };
   }, [isHovering]);
@@ -92,10 +119,10 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
 
   useEffect(() => {
     if (isHovering) {
-      controls.start('expanded');
+      controls.start("expanded");
       setIsExpanded(true);
     } else {
-      controls.start('collapsed').then(() => setIsExpanded(false));
+      controls.start("collapsed").then(() => setIsExpanded(false));
     }
   }, [isHovering, controls]);
 
@@ -106,17 +133,17 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
   }, []);
 
   return (
-    <div className="grid grid-cols-12 h-48 pointer-events-none" ref={containerRef}>
+    <div className="grid grid-cols-12 pointer-events-none" ref={containerRef}>
       <div className="col-span-12 bottom-2">
         <motion.div
           className="relative w-full pointer-events-auto"
           initial="collapsed"
           animate={controls}
           variants={{
-            expanded: { height: 'auto' },
-            collapsed: { height: 48 }
+            expanded: { height: "auto" }, // Dynamic height when expanded
+            collapsed: { height: 12 }, // Only the handle height (h-12 = 48px, but we adjust to just the handle)
           }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <div className="absolute bottom-0 left-0 right-0 w-full">
             <AnimatePresence mode="wait">
@@ -132,7 +159,7 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
                   onMouseEnter={() => setIsHandleHovered(true)}
                   onMouseLeave={() => setIsHandleHovered(false)}
                 >
-                  <motion.div 
+                  <motion.div
                     className="w-36 h-1.5 rounded-full bg-white/30 hover:bg-white/50 transition-colors"
                     animate={{ opacity: isHandleHovered ? 0.8 : 0.3 }}
                     transition={{ duration: 0.3 }}
@@ -178,9 +205,9 @@ export function ChatInput({ onSend, modelName = 'Assistant' }: ChatInputProps) {
                       className="flex-1 font-['Geist Mono Medium'] text-sm placeholder:text-zinc-600"
                       autoFocus
                     />
-                    <Button 
-                      onClick={handleSend} 
-                      size="icon" 
+                    <Button
+                      onClick={handleSend}
+                      size="icon"
                       className="h-8 w-8"
                       disabled={!message.trim()}
                     >

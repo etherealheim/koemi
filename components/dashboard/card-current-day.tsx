@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { BorderTrail } from '@/components/mp/border-trail';
+import Link from "next/link";
 
 export default function CardCurrentDay() {
   const router = useRouter();
@@ -41,37 +42,57 @@ export default function CardCurrentDay() {
 
   return (
     <Card 
-      className="w-full bg-stone-950 border-stone-800 text-white hover:bg-stone-900 transition-colors cursor-pointer relative overflow-hidden"
+      className="w-full bg-stone-950 border-stone-800 text-white transition-colors cursor-pointer relative overflow-hidden p-0"
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardContent className="flex flex-col items-left justify-between h-full px-6 py-0 relative z-10">
-        <div>
-          <motion.p
-            className="text-xl font-medium text-stone-400 align-left"
-            variants={textVariants}
-            initial="hidden"
-            animate="visible"
-            custom={0}
-          >
-            {day}
-          </motion.p>
-          <motion.p
-            className="text-6xl font-semibold text-stone-300 mt-2"
-            variants={textVariants}
-            initial="hidden"
-            animate="visible"
-            custom={2}
-          >
-            {month} {date}
-          </motion.p>
+      <CardContent className="flex flex-col h-full p-0">
+        <div className="flex-1 w-full hover:bg-stone-900 transition-all px-6 pt-6">
+          <Link href={`/journal/${formattedDate}`}>
+            <motion.p
+              className="text-lg font-medium text-stone-400"
+              variants={textVariants}
+              initial="hidden"
+              animate="visible"
+              custom={0}
+            >
+              {day}
+            </motion.p>
+            <motion.p
+              className="text-3xl font-semibold text-stone-300"
+              variants={textVariants}
+              initial="hidden"
+              animate="visible"
+              custom={2}
+            >
+              {month} {date}
+            </motion.p>
+          </Link>
         </div>
-        <motion.p
-          className="text-lg font-regular italic text-stone-600"
-        >
-          &ldquo;Your users might not be humans anymore.&rdquo;
-        </motion.p>
+        
+        <div className="flex-1 w-full hover:bg-stone-800/50 transition-all border-t border-stone-800 px-6 pt-6">
+            <Link href={`/memories/${formattedDate}`}>
+              <motion.p
+                className="text-lg font-medium text-stone-400"
+                variants={textVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0}
+              >
+                Create
+              </motion.p>
+              <motion.p
+                className="text-3xl font-semibold text-stone-300"
+                variants={textVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0}
+              >
+                New Memory
+              </motion.p>
+            </Link>
+        </div>
       </CardContent>
       {isHovered && (
         <BorderTrail

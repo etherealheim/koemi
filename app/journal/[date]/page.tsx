@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { TextEditor } from "@/components/editor/TextEditor";
 import { AppSidebar } from "@/components/app-sidebar"
-import { ChatInput } from "@/components/chat-input";
+import { SwitchCustom } from "@/components/ui/switch-custom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -73,26 +73,6 @@ export default function JournalPage() {
     }
   };
 
-  const handleSendMessage = (message: string) => {
-    // Here you would implement your logic to process the chat message
-    console.log(`Message sent: ${message}`);
-    // For example, you could append the message to the current content
-    if (content !== null) {
-      const newContent = `${content}\n\n**Chat:** ${message}`;
-      setContent(newContent);
-      // Save the new content
-      fetch('/api/journal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: newContent, fileName }),
-      }).catch(error => {
-        console.error("Failed to save content:", error);
-      });
-    }
-  };
-
   // Format date for display (e.g., "March 18, 2025")
   const displayDate = date 
     ? new Date(date).toLocaleDateString('en-US', {
@@ -141,10 +121,6 @@ export default function JournalPage() {
                 onChange={handleChange}
                 spellCheck={false}
                 disabled={isLoading}
-              />
-              <ChatInput 
-                  onSend={handleSendMessage} 
-                  modelName="Journal Assistant"
               />
             </>
           )}

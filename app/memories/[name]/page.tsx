@@ -133,27 +133,13 @@ export default function MemoryPage() {
             <>
               <TextEditor
                 fileName={fileName}
-                placeholder="Start writing in your memory..."
-                className={`font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4 ${
-                  isEditorPushed 
-                    ? "min-h-[calc(100vh-18rem)]" 
-                    : "min-h-[calc(100vh-6rem)]"
-                }`}
+                placeholder="Start writing in your journal..."
+                className={`font-mono bg-background border-zinc-900 text-foreground resize-none outline-none focus:outline-none focus:ring-0 focus:border-zinc-800 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 p-4 h-[calc(100vh-14rem)] pb-16`}
                 value={content}
                 onChange={handleChange}
                 spellCheck={false}
                 disabled={isLoading}
               />
-              <div 
-                className="absolute bottom-0 left-0 right-0 z-10"
-                onMouseEnter={() => setIsEditorPushed(true)}
-                onMouseLeave={() => setIsEditorPushed(false)}
-              >
-                <ChatInput 
-                  onSend={handleSendMessage} 
-                  modelName="Memory Assistant"
-                />
-              </div>
             </>
           )}
         </div>

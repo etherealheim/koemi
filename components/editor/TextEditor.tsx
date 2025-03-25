@@ -12,23 +12,26 @@ import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import rehypeSanitize from "rehype-sanitize"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 
 export interface TextEditorProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   fileName?: string;
+  onFileNameChange?: (newFileName: string) => void;
 }
 
-type ViewMode = "edit" | "preview" | "split";
+type ViewMode = "edit" | "preview";
 
 const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  ({ className, fileName, ...props }, ref) => {
+  ({ className, fileName = "Untitled Memory", onFileNameChange, ...props }, ref) => {
     const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
     const [showDropdown, setShowDropdown] = React.useState(false)
     const [slashPosition, setSlashPosition] = React.useState<number | null>(null)
     const [dropdownPosition, setDropdownPosition] = React.useState<{ x: number, y: number } | null>(null)
     const [viewMode, setViewMode] = React.useState<ViewMode>("edit")
     const [markdownContent, setMarkdownContent] = React.useState("")
+    const [isNewPage, setIsNewPage] = React.useState(true)
     
     // Custom hooks
     const { 
@@ -47,20 +50,45 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
       }
     }, [selectedText, showDropdown])
     
+    // Extract title from content and emit changes
+    const extractAndUpdateTitle = React.useCallback((content: string) => {
+      const lines = content.split('\n')
+      const titleLine = lines[0]
+      if (titleLine.startsWith('# ')) {
+        const newTitle = titleLine.substring(2).trim()
+        if (newTitle && onFileNameChange && newTitle !== fileName) {
+          onFileNameChange(newTitle)
+        }
+      }
+    }, [fileName, onFileNameChange])
+    
     // Initial content setup for text area value
     React.useEffect(() => {
       if (props.value) {
-        setMarkdownContent(props.value.toString());
+        setMarkdownContent(props.value.toString())
+        setIsNewPage(false)
+        // Check for title in existing content
+        extractAndUpdateTitle(props.value.toString())
+      } else {
+        setIsNewPage(true)
+        const initialContent = `# New page\n\nWrite, press 'space' for AI, '/' for commands...`
+        if (props.onChange) {
+          const event = { target: { value: initialContent } } as React.ChangeEvent<HTMLTextAreaElement>
+          props.onChange(event)
+        }
+        setMarkdownContent(initialContent)
       }
-    }, [props.value]);
+    }, [props.value, props.onChange, extractAndUpdateTitle])
     
     // Update markdown content when textarea value changes
     React.useEffect(() => {
       if (viewMode !== "edit") {
-        const content = textareaRef.current?.value || props.value?.toString() || "";
-        setMarkdownContent(content);
+        const content = textareaRef.current?.value || props.value?.toString() || ""
+        setMarkdownContent(content)
+        // Check for title changes when content updates
+        extractAndUpdateTitle(content)
       }
-    }, [viewMode, props.value]);
+    }, [viewMode, props.value, extractAndUpdateTitle])
     
     // Function to calculate cursor position
     const calculateCursorPosition = (cursorPosition: number) => {
@@ -177,6 +205,13 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
 
     // Handle changes to the textarea content
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newContent = e.target.value
+      
+      // If this is the first edit, clear the placeholder text
+      if (isNewPage && newContent !== markdownContent) {
+        setIsNewPage(false)
+      }
+      
       // Call the original onChange handler
       if (props.onChange) {
         props.onChange(e)
@@ -184,8 +219,11 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
       
       // Update markdown content in real-time
       if (viewMode !== "edit") {
-        setMarkdownContent(e.target.value);
+        setMarkdownContent(newContent)
       }
+
+      // Extract and update title if changed
+      extractAndUpdateTitle(newContent)
       
       // Check if we need to dismiss the dropdown
       if (showDropdown) {
@@ -254,12 +292,12 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
       }
     }, [])
 
-    // Toggle between edit, preview, and split modes
-    const toggleViewMode = (mode: ViewMode) => {
-      setViewMode(mode);
+    // Toggle between edit and preview modes
+    const toggleViewMode = () => {
+      setViewMode(prev => prev === "edit" ? "preview" : "edit");
       
-      // Update markdown content when switching to preview or split mode
-      if (mode !== "edit") {
+      // Update markdown content when switching to preview mode
+      if (viewMode === "edit") {
         const content = textareaRef.current?.value || props.value?.toString() || "";
         setMarkdownContent(content);
       }
@@ -320,55 +358,11 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
     };
 
     return (
-      <div className="relative flex flex-col gap-2">
-        <div className="flex justify-end mb-1 gap-1">
-          <div className="flex bg-zinc-900/50 rounded-md p-0.5">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => toggleViewMode("edit")}
-              className={cn(
-                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
-                viewMode === "edit" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
-              )}
-            >
-              <EyeOff className="h-3.5 w-3.5" />
-              <span>Edit</span>
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => toggleViewMode("preview")}
-              className={cn(
-                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
-                viewMode === "preview" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
-              )}
-            >
-              <Eye className="h-3.5 w-3.5" />
-              <span>Preview</span>
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => toggleViewMode("split")}
-              className={cn(
-                "flex items-center gap-1.5 text-xs h-7 px-2.5 rounded-sm",
-                viewMode === "split" ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-300"
-              )}
-            >
-              <Split className="h-3.5 w-3.5" />
-              <span>Split</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className={cn("relative w-full", viewMode === "split" ? "grid grid-cols-2 gap-4" : "")}>
-          
+      <div className="relative flex flex-col gap-2 h-full">
+        <div className="relative flex-1 w-full">
           {/* Editor */}
-          {(viewMode === "edit" || viewMode === "split") && (
-            <div className="relative">
+          {viewMode === "edit" && (
+            <div className="relative h-full">
               <textarea
                 ref={(element) => {
                   if (typeof ref === "function") ref(element)
@@ -376,16 +370,18 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
                   textareaRef.current = element
                 }}
                 className={cn(
-                  "flex w-full rounded-md border border-zinc-900 bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
+                  "flex w-full h-full rounded-md border border-zinc-900 bg-background px-6 py-4 text-sm font-['Geist Mono Medium']",
                   "placeholder:text-zinc-600 focus:placeholder:opacity-0 placeholder:transition-all duration-150",
                   "text-zinc-100",
+                  "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-4",
+                  isNewPage ? "text-zinc-500" : "",
                   className
                 )}
                 style={{
                   lineHeight: "1.5",
                   padding: "16px 24px",
                   caretColor: "transparent",
-                  height: viewMode === "split" ? "400px" : undefined
+                  height: "100%"
                 }}
                 onFocus={(e) => {
                   e.currentTarget.style.caretColor = "auto";
@@ -425,16 +421,16 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
           )}
           
           {/* Preview */}
-          {(viewMode === "preview" || viewMode === "split") && (
+          {viewMode === "preview" && (
             <div 
               className={cn(
                 "rounded-md border border-zinc-900 bg-background px-6 py-4",
                 "prose prose-invert prose-zinc prose-headings:font-semibold max-w-none",
                 "prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5",
-                viewMode === "preview" ? "w-full" : ""
+                "w-full h-full"
               )}
               style={{ 
-                height: viewMode === "split" ? "400px" : undefined,
+                height: "100%",
                 overflowY: "auto"
               }}
             >
@@ -447,6 +443,15 @@ const TextEditor = React.forwardRef<HTMLTextAreaElement, TextEditorProps>(
               </ReactMarkdown>
             </div>
           )}
+
+          {/* Preview Toggle Switch */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-50 bg-zinc-900/90 px-2.5 py-1.5 rounded-md backdrop-blur-sm">
+            <Eye className="h-3.5 w-3.5 text-zinc-400" />
+            <Switch
+              checked={viewMode === "preview"}
+              onCheckedChange={toggleViewMode}
+            />
+          </div>
         </div>
       </div>
     )

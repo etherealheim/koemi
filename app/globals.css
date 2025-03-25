@@ -139,3 +139,33 @@
     @apply bg-background/80 backdrop-blur-md border-border/50;
   }
 }
+
+@layer utilities {
+  .bg-switch-gradient {
+    position: relative; /* Ensure the pseudo-element is positioned relative to this element */
+    background: none; /* Remove the background from the main element */
+    overflow: hidden; /* Optional: Hide any overflow from the pseudo-element */
+  }
+  
+  .bg-switch-gradient::before {
+    content: '';
+    position: absolute;
+    top: -7;
+    left: -4;
+    width: 150%;
+    height: 150%;
+    background-image: url('/sprites/switch-gradient.jpg');
+    background-size: 170% 120%;
+    animation: rotate-gradient 20s linear infinite;
+    z-index: -1; /* Ensure the pseudo-element is behind the content */
+  }
+  
+  @keyframes rotate-gradient {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
