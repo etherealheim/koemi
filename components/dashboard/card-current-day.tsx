@@ -48,7 +48,7 @@ export default function CardCurrentDay() {
       onMouseLeave={() => setIsHovered(false)}
     >
       <CardContent className="flex flex-col h-full p-0">
-        <div className="flex-1 w-full hover:bg-stone-900 transition-all px-6 pt-6">
+        <div className="flex-1 w-full hover:bg-stone-900 hover:shadow-[inset_5px_5px_10px_#090909] hover:bg-gradient-to-br hover:from-[#23201D] hover:to-[#0A0807] px-6 pt-6">
           <Link href={`/journal/${formattedDate}`}>
             <motion.p
               className="text-lg font-medium text-stone-400"
@@ -71,7 +71,7 @@ export default function CardCurrentDay() {
           </Link>
         </div>
         
-        <div className="flex-1 w-full hover:bg-stone-800/50 transition-all border-t border-stone-800 px-6 pt-6">
+        <div className="flex-1 w-full hover:bg-stone-900 hover:shadow-[inset_5px_5px_10px_#090909] hover:bg-gradient-to-br hover:from-[#23201D] hover:to-[#0A0807] border-t border-stone-800 px-6 pt-6">
             <Link href={`/memories/${formattedDate}`}>
               <motion.p
                 className="text-lg font-medium text-stone-400"
